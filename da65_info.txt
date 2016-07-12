@@ -1,0 +1,119 @@
+        # This is a comment. It extends to the end of the line
+        GLOBAL {
+            OUTPUTNAME      "hyperbas.asm";
+            INPUTNAME       "hyperbas.rom";
+            STARTADDR       $C000;
+            PAGELENGTH      0;                  # No paging
+            CPU             "6502";
+        };
+
+
+
+RANGE { START $FFAC; END   $FFC4;    TYPE Code;   NAME "START_HYPERBASIC"; COMMENT "$FFAC";   };
+RANGE { START $FFC5;  END   $FFE5;    TYPE BYTETABLE; COMMENT "free_bytes";  };
+
+RANGE { START $D587;  END   $D5D2;    TYPE Code;NAME "ROUTINE1";   COMMENT "$D587";  };
+
+
+RANGE { START $C384;  END   $C3AB;    TYPE Code;NAME "ROUTINE2";   COMMENT "$C384";  };
+
+RANGE { START $C005;  END   $C06B;    TYPE Code;NAME "ROUTINE3";   COMMENT "$C005";  };
+RANGE { START $C06D;  END   $C07a;    TYPE Code;   };
+RANGE { START $C07b;  END   $C07b;    TYPE BYTETABLE; COMMENT "XEDT : $2d";  };
+
+
+RANGE { START $C4DE;  END   $C4E6;    TYPE Code;NAME "ROUTINE4";   COMMENT "$C4DE";  };
+
+
+
+		
+RANGE { START $D5D3;  END   $D5D3;    TYPE BYTETABLE;  };		
+
+	
+#via2
+LABEL { NAME "V2DRA";     ADDR  $0321;   };
+ 	
+# TELEMON 
+LABEL { NAME "FLGTEL";     ADDR  $020D;   };
+LABEL { NAME "RESB";     ADDR  $02;  Size 2;  };
+LABEL { NAME "RES";     ADDR  $00;  Size 2;  };	
+LABEL { NAME "VNMI";     ADDR  $02F4;  Size 2;  };			
+LABEL { NAME "VAPLIC";     ADDR  $02FD;  Size 2;  };			
+LABEL { NAME "BUFNOM";     ADDR  $517; SIZE 11;   };	
+
+		
+		
+		#STR 
+		RANGE { START $F564;  END   $F569;    TYPE TextTable; NAME "str_saveo";   COMMENT "$E564";  };
+		RANGE { START $FF7B;  END   $FF80;    TYPE TextTable; NAME "str_schar";   COMMENT "X";  };
+		RANGE { START $FF65;  END   $FF69;    TYPE TextTable; NAME "str_char";   COMMENT "X";  };
+		RANGE { START $FF4F;  END   $FF53;    TYPE TextTable; NAME "str_fill";   COMMENT "X";  };
+		RANGE { START $FF09;  END   $FF0f;    TYPE TextTable; NAME "str_middle";   COMMENT "X";  };
+		RANGE { START $FEC5;  END   $FECA;    TYPE TextTable; NAME "str_input";   COMMENT "X";  };
+		RANGE { START $FE9d;  END   $FEA2;    TYPE TextTable; NAME "str_aplic";   COMMENT "X";  };
+		RANGE { START $FE7c;  END   $FE82;    TYPE TextTable; NAME "str_minitel";   COMMENT "X";  };
+		RANGE { START $FE63;  END   $FE69;    TYPE TextTable; NAME "str_serveur";   COMMENT "X";  };
+		RANGE { START $FE49;  END   $FE4d;    TYPE TextTable; NAME "str_page";   COMMENT "X";  };
+		RANGE { START $FE2C;  END   $FE2E;    TYPE TextTable; NAME "str_fre";   COMMENT "X";  };
+		RANGE { START $FE20;  END   $FE22;    TYPE TextTable; NAME "str_dim";   COMMENT "X";  };
+		RANGE { START $FE10;  END   $FE14;    TYPE TextTable; NAME "str_vcopy";   COMMENT "X";  };
+		
+		RANGE { START $FD9E;  END   $FDA2;    TYPE TextTable; NAME "str_clear";   COMMENT "X";  };
+		
+		RANGE { START $FD88;  END   $FD8D;    TYPE TextTable; NAME "str_erroff";   COMMENT "X";  };
+		
+		RANGE { START $FD76;  END   $FD7B;    TYPE TextTable; NAME "str_resume";   COMMENT "X";  };
+		RANGE { START $Fd61;  END   $FD65;    TYPE TextTable; NAME "str_error";   COMMENT "X";  };
+		
+		
+		RANGE { START $Fd4a;  END   $FD4e;    TYPE TextTable; NAME "str_errnl";   COMMENT "X";  };
+		
+		RANGE { START $Fd35;  END   $FD39;    TYPE TextTable; NAME "str_errnb";   COMMENT "X";  };
+		
+		RANGE { START $Fd28;  END   $FD2a;    TYPE TextTable; NAME "str_cli";   COMMENT "X";  };
+		RANGE { START $Fd1b;  END   $FD1d;    TYPE TextTable; NAME "str_sei";   COMMENT "X";  };
+		RANGE { START $Fd01;  END   $Fd03;    TYPE TextTable; NAME "str_lpr";   COMMENT "X";  };
+		RANGE { START $Fcd8;  END   $Fcdc;    TYPE TextTable; NAME "str_lores";   COMMENT "X";  };
+		RANGE { START $Fcbd;  END   $Fcc1;    TYPE TextTable; NAME "str_music";   COMMENT "X";  };
+		RANGE { START $Fca7;  END   $Fcab;    TYPE TextTable; NAME "str_sound";   COMMENT "X";  };
+		RANGE { START $FC93;  END   $FC96;    TYPE TextTable; NAME "str_play";   COMMENT "X";  };
+		RANGE { START $FC4e;  END   $FC53;    TYPE TextTable; NAME "str_window";   COMMENT "X";  };
+		
+		
+		
+		
+		RANGE { START $D86F;  END   $D89F;    TYPE TextTable; NAME "str_copyright";   COMMENT "X";  };	
+		RANGE { START $D855;  END   $D860;    TYPE TextTable; NAME "str_freebytes";   COMMENT "X";  };	
+		
+		RANGE { START $D5E2;  END   $D854;    TYPE TextTable; NAME "str_junk";   COMMENT "X";  };	
+		
+	#	RANGE { START $DFCA;  END   $D854;    TYPE TextTable; NAME "str_junk2";   COMMENT "X";  };	
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
