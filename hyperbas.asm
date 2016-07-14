@@ -1,5 +1,5 @@
 ; da65 V2.15 - Git 8b68576
-; Created:    2016-07-08 13:47:09
+; Created:    2016-07-14 11:55:00
 ; Input file: hyperbas.rom
 ; Page:       1
 
@@ -8,16 +8,31 @@
 
 RES             := $0000
 RESB            := $0002
+DECDEB          := $0004
+DECFIN          := $0006
+DECCIB          := $0008
+DECTRV          := $000A
+TR0             := $000C
+TR1             := $000D
+TR2             := $000E
+TR3             := $000F
 L005E           := $005E
 L0061           := $0061
+VARLNG          := $008C
 L00BE           := $00BE
+VARAPL          := $00D0
 L0100           := $0100
 L0145           := $0145
 FLGTEL          := $020D
+SCRX            := $0220
+SCRDX           := $0228
 VNMI            := $02F4
 VAPLIC          := $02FD
 V2DRA           := $0321
 L040C           := $040C
+VEXBNK          := $0414
+BNKCIB          := $0417
+BUFNOM          := $0517
 L0531           := $0531
 L07BA           := $07BA
 L07C0           := $07C0
@@ -63,12 +78,12 @@ L9C1D           := $9C1D
 ; $C005
 ROUTINE3:
         ldx     #$00
-        stx     $8C
+        stx     VARLNG
         stx     $07FF
         stx     L07ED
         stx     L07EA
         ldx     #$80
-        stx     $8D
+        stx     VARLNG+1
         dex
         stx     $02A2
         lda     #$0D
@@ -98,15 +113,17 @@ ROUTINE3:
         sty     $02FF
         lda     FLGTEL
         and     #$04
-        beq     LC068
-        jsr     LC4DE
-        jsr     LF50B
-LC068:  ldx     #$00
+        beq     ROUTINE10
+        jsr     ROUTINE4
+        jsr     ROUTINE5
+; $C068
+ROUTINE10:
+        ldx     #$00
         ldy     #$00
         .byte   $2C
 LC06D:  ldx     #$06
         lda     #$01
-        sta     $9B
+        sta     VARLNG+15
         lda     #$10
         sta     $07EB
         lda     #$6E
@@ -114,13 +131,13 @@ LC06D:  ldx     #$06
         .byte   $2D
         asl     $027E
         cmp     #$03
-        beq     LC068
-        sty     $8E
-        sta     $8F
-        lda     $8C
+        beq     ROUTINE10
+        sty     VARLNG+2
+        sta     VARLNG+3
+        lda     VARLNG
         ora     #$02
-        sta     $8C
-        jsr     LC4DE
+        sta     VARLNG
+        jsr     ROUTINE4
         txa
         pha
         .byte   $24
@@ -131,19 +148,19 @@ LC093:  inx
         txa
         clc
         adc     #$90
-        sta     $0C
+        sta     TR0
         lda     #$00
         adc     #$05
-        sta     $0D
+        sta     TR1
         ldy     #$00
-LC0A9:  lda     ($0C),y
+LC0A9:  lda     (TR0),y
         beq     LC0B0
         iny
         bne     LC0A9
 LC0B0:  bit     FLGTEL
         bmi     LC0CF
-        jsr     LC49B
-        lda     $0220
+        jsr     ROUTINE15
+        lda     SCRX
         pha
         lda     $0224
         pha
@@ -153,58 +170,59 @@ LC0B0:  bit     FLGTEL
         tay
         pla
         tax
-        jsr     LC3AB
-        jsr     LC4A6
+        jsr     ROUTINE11
+        jsr     ROUTINE14
 LC0CF:  pla
         bne     LC112
         lda     #$03
         sta     $02A8
         sta     $02A6
         ldy     #$00
-        lda     ($0C),y
+        lda     (TR0),y
         beq     LC14B
         sec
-        lda     $0C
+        lda     TR0
         sbc     #$90
         tax
-        jsr     LC49B
-        jsr     LC4E7
-        jsr     LC4A6
+        jsr     ROUTINE15
+        jsr     ROUTINE16
+        jsr     ROUTINE14
         bcs     LC14E
         tya
         tax
         jsr     LDA03
         ldx     #$00
         brk
-        and     RES,x
+        .byte   $35
+        brk
         .byte   $33
         jsr     LC10F
 LC0FF:  sec
-        lda     $0220
-        sbc     $0228
+        lda     SCRX
+        sbc     SCRDX
         cmp     #$02
         bcc     LC10C
         brk
         .byte   $25
-LC10C:  jmp     LC068
+LC10C:  jmp     ROUTINE10
 
 LC10F:  jmp     (L005E)
 
-LC112:  ldx     $8F
+LC112:  ldx     VARLNG+3
         cpx     #$0A
         beq     LC155
         cpx     #$0B
         beq     LC175
         ldy     #$00
-        lda     ($0C),y
+        lda     (TR0),y
         beq     LC133
         sec
-        lda     $0C
+        lda     TR0
         sbc     #$90
         tax
-        jsr     LC49B
-        jsr     LC4E7
-        jsr     LC4A6
+        jsr     ROUTINE15
+        jsr     ROUTINE16
+        jsr     ROUTINE14
         bcs     LC14E
 LC133:  tya
         brk
@@ -216,9 +234,9 @@ LC136:  clc
         tya
         adc     $07FE
         sta     $07FE
-        jsr     LC3C2
-        jsr     LC3DC
-LC14B:  jmp     LC068
+        jsr     ROUTINE17
+        jsr     ROUTINE18
+LC14B:  jmp     ROUTINE10
 
 LC14E:  lda     #$0B
         brk
@@ -241,7 +259,7 @@ LC166:  lda     (RESB),y
         ldy     #$80
         jmp     LC06D
 
-LC172:  jmp     LC068
+LC172:  jmp     ROUTINE10
 
 LC175:  brk
         .byte   $2F
@@ -293,8 +311,8 @@ LC1BE:  lda     L0061
         ldx     $C9
         cpx     #$00
         beq     LC1CC
-        lda     $9E
-        ldy     $9F
+        lda     VARLNG+18
+        ldy     VARLNG+19
 LC1CC:  jsr     LD0ED
         lda     $C0
         ldy     $C1
@@ -313,7 +331,7 @@ LC1E5:  sec
         iny
 LC1EB:  jsr     LD0ED
         lda     #$02
-        sta     $98
+        sta     VARLNG+12
         rts
 
 LC1F3:  .byte   $20
@@ -373,11 +391,11 @@ LC24C:  ldy     #$04
         bcs     LC265
         cmp     #$0D
         bcc     LC265
-        lda     $98
+        lda     VARLNG+12
         cmp     #$02
         beq     LC265
-        dec     $98
-LC265:  ldx     $98
+        dec     VARLNG+12
+LC265:  ldx     VARLNG+12
 LC267:  jsr     LC360
         dex
         bpl     LC267
@@ -400,12 +418,12 @@ LC286:  ldy     $11
         bne     LC276
         rts
 
-LC28E:  sta     $96
+LC28E:  sta     VARLNG+10
         cmp     #$08
         bcc     LC29A
         cmp     #$0D
         bcs     LC29A
-        inc     $98
+        inc     VARLNG+12
 LC29A:  cmp     #$B0
         bcc     LC2AA
         cmp     #$C0
@@ -416,8 +434,8 @@ LC29A:  cmp     #$B0
         dec     $10
         .byte   $2C
 LC2AA:  lda     #$00
-        sta     $97
-        lda     $96
+        sta     VARLNG+11
+        lda     VARLNG+10
         cmp     #$1D
         bcc     LC2BB
         cmp     #$20
@@ -435,12 +453,12 @@ LC2C7:  cmp     #$10
         lda     #$22
         jsr     LC362
 LC2D0:  ldy     #$06
-        lda     ($92),y
+        lda     (VARLNG+6),y
         sta     $13
         cmp     #$07
         beq     LC2E9
         iny
-LC2DB:  lda     ($92),y
+LC2DB:  lda     (VARLNG+6),y
         sty     $12
         jsr     LC362
         ldy     $12
@@ -448,25 +466,25 @@ LC2DB:  lda     ($92),y
         .byte   $C4
 LC2E6:  .byte   $13
         bne     LC2DB
-LC2E9:  lda     $94
+LC2E9:  lda     VARLNG+8
         cmp     #$01
         beq     LC2FF
         cmp     #$03
         bne     LC314
-        lda     $96
+        lda     VARLNG+10
         cmp     #$1D
         bcc     LC314
         cmp     #$20
         bcs     LC314
         bcc     LC310
 LC2FF:  ldy     #$06
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tay
-        lda     ($92),y
+        lda     (VARLNG+6),y
         cmp     #$80
         beq     LC2C1
         ldy     #$04
-        lda     ($92),y
+        lda     (VARLNG+6),y
         beq     LC2C4
 LC310:  lda     #$20
         bne     LC2C4
@@ -500,9 +518,7 @@ LC33E:  iny
         php
         and     #$7F
         sty     $12
-        .byte   $20
-LC348:  .byte   $62
-        .byte   $C3
+        jsr     LC362
         ldy     $12
         plp
         bpl     LC33E
@@ -519,7 +535,7 @@ LC358:  sec
 
 LC360:  lda     #$20
 LC362:  pha
-        lda     $9B
+        lda     VARLNG+15
         lsr     a
         bcc     LC36C
         pla
@@ -534,10 +550,10 @@ LC36C:  pla
 LC372:  lda     #$20
         jmp     L07EA
 
-LC377:  lda     $9B
+LC377:  lda     VARLNG+15
         cmp     #$40
         beq     LC383
-        lda     $9B
+        lda     VARLNG+15
         bne     LC372
         brk
         .byte   $33
@@ -563,155 +579,169 @@ LC3A2           := * + 1
         bpl     LC39E
         lda     #$D0
         sta     $0805
-        jmp     LFDA5
+        jmp     ROUTINE12
 
-LC3AB:  lda     #$1F
+; $C3AB
+ROUTINE11:
+        lda     #$1F
         brk
-        bpl     LC348
+        .byte   $10
+        tya
         clc
         adc     #$40
         brk
-        bpl     LC3E2
-        ora     $5002
-        ora     ($E8,x)
-        txa
+        .byte   $10
+        bit     FLGTEL
+        bvc     LC3BB
+        inx
+LC3BB:  txa
         clc
         adc     #$40
         brk
-        bpl     LC422
-LC3C2:  stx     $0C
-        sta     $0D
+        .byte   $10
+        rts
+
+; $C3C2
+ROUTINE17:
+        stx     TR0
+        sta     TR1
         ldy     #$00
         clc
-        lda     ($0C),y
-        adc     $0F
-        sta     ($0C),y
+        lda     (TR0),y
+        adc     TR3
+        sta     (TR0),y
         tax
         iny
-        lda     ($0C),y
+        lda     (TR0),y
         beq     LC3DB
         adc     $10
-        sta     ($0C),y
-        bne     LC3C2
+        sta     (TR0),y
+        bne     ROUTINE17
 LC3DB:  rts
 
-LC3DC:  jsr     LCAE8
+; $C3DC
+ROUTINE18:
+        jsr     ROUTINE19
         lda     $5C
-        .byte   $A4
-LC3E2:  eor     $0C85,x
-        sty     $0D
+        ldy     $5D
+        sta     TR0
+        sty     TR1
 LC3E7:  ldy     #$00
-        lda     ($0C),y
+        lda     (TR0),y
         beq     LC42C
         sec
         sbc     #$04
-        sta     $0E
+        sta     TR2
         ldy     #$03
 LC3F4:  iny
-        dec     $0E
+        dec     TR2
         bmi     LC41D
-        lda     ($0C),y
+        lda     (TR0),y
         cmp     #$C0
         bcc     LC3F4
-        sta     $96
+        sta     VARLNG+10
         iny
-        dec     $0E
+        dec     TR2
         cmp     #$D0
         bcc     LC3F4
-        lda     ($0C),y
-        sta     $97
+        lda     (TR0),y
+        sta     VARLNG+11
         jsr     LCA8A
         tya
         pha
         ldy     #$03
-        lda     ($92),y
+        lda     (VARLNG+6),y
         ora     #$80
-        sta     ($92),y
+        sta     (VARLNG+6),y
         pla
         tay
         bpl     LC3F4
 LC41D:  ldy     #$00
         clc
-        lda     ($0C),y
-LC422:  adc     $0C
-        sta     $0C
+        lda     (TR0),y
+        adc     TR0
+        sta     TR0
         bcc     LC3E7
-        inc     $0D
+        inc     TR1
         bcs     LC3E7
 LC42C:  ldx     $07FD
         lda     $07FE
-LC432:  stx     $92
-        sta     $93
+LC432:  stx     VARLNG+6
+        sta     VARLNG+7
 LC436:  ldy     #$01
-        lda     ($92),y
+        lda     (VARLNG+6),y
         beq     LC48D
         ldy     #$03
-        lda     ($92),y
+        lda     (VARLNG+6),y
         bpl     LC450
         and     #$7F
-        sta     ($92),y
+        sta     (VARLNG+6),y
         ldy     #$00
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tax
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         bne     LC432
 LC450:  sec
         ldy     #$00
-        lda     $92
-        sta     $08
-        sbc     ($92),y
-        sta     $0F
+        lda     VARLNG+6
+        sta     DECCIB
+        sbc     (VARLNG+6),y
+        sta     TR3
         iny
-        lda     $93
-        sta     $09
-        sbc     ($92),y
+        lda     VARLNG+7
+        sta     DECCIB+1
+        sbc     (VARLNG+6),y
         sta     $10
-        lda     ($92),y
-        sta     $05
+        lda     (VARLNG+6),y
+        sta     DECDEB+1
         dey
-        lda     ($92),y
-        sta     $04
+        lda     (VARLNG+6),y
+        sta     DECDEB
         lda     L005E
         ldy     $5F
-        sta     $06
-        sty     $07
+        sta     DECFIN
+        sty     DECFIN+1
         brk
-        clc
-        lda     $92
+        .byte   $18
+        lda     VARLNG+6
         pha
         tax
-        lda     $93
+        lda     VARLNG+7
         pha
-        jsr     LC3C2
-        jsr     LCAE8
+        jsr     ROUTINE17
+        jsr     ROUTINE19
         pla
-        sta     $93
+        sta     VARLNG+7
         pla
-        sta     $92
+        sta     VARLNG+6
         jmp     LC436
 
 LC48D:  clc
-        lda     $92
+        lda     VARLNG+6
         adc     #$06
         sta     L005E
-        lda     $93
+        lda     VARLNG+7
         adc     #$00
         sta     $5F
         rts
 
-LC49B:  pha
+; $C49B
+ROUTINE15:
+        pha
         lda     RES
-        sta     $AE
+        sta     VARLNG+34
         lda     RES+1
-        sta     $AF
+        sta     VARLNG+35
         pla
         rts
 
-LC4A6:  pha
-        lda     $AE
+; $C4A6
+ROUTINE14:
+        pha
+        lda     VARLNG+34
         sta     RES
-        lda     $AF
+        lda     VARLNG+35
         sta     RES+1
         pla
         rts
@@ -719,35 +749,39 @@ LC4A6:  pha
 LC4B1:  jsr     LC1BE
         sec
         lda     RESB
-        sta     $08
+        sta     DECCIB
         sbc     $C0
-        sta     $0F
+        sta     TR3
         lda     RESB+1
-        sta     $09
+        sta     DECCIB+1
         sbc     $C1
         sta     $10
         lda     $C0
         ldy     $C1
-        sta     $04
-        sty     $05
+        sta     DECDEB
+        sty     DECDEB+1
         lda     L005E
         ldy     $5F
-        sta     $06
-        sty     $07
+        sta     DECFIN
+        sty     DECFIN+1
         brk
         clc
-        lda     $0F
+        lda     TR3
         ldy     $10
         jmp     LC136
 
-LC4DE:  lda     #$00
+; $C4DE
+ROUTINE4:
+        lda     #$00
         sta     $8B
         sta     $C2
         sta     $67
         rts
 
-LC4E7:  stx     $C4
-        lsr     $B0
+; $C4E7
+ROUTINE16:
+        stx     $C4
+        lsr     VARLNG+36
         ldy     #$05
         sty     $C2
         ldy     #$01
@@ -789,7 +823,7 @@ LC527:  lda     #$AA
         jsr     LC676
         bcs     LC5B1
         ldx     #$02
-        lda     $94
+        lda     VARLNG+8
         cmp     #$08
         beq     LC54A
         cmp     #$0C
@@ -804,24 +838,24 @@ LC54B:  ldx     #$0C
         beq     LC576
         jmp     LC5DA
 
-LC55C:  lda     $92
-        ldy     $93
+LC55C:  lda     VARLNG+6
+        ldy     VARLNG+7
 LC560:  jsr     LCE02
-        lda     $92
-        ldy     $93
-        sta     $0C
-        sty     $0D
+        lda     VARLNG+6
+        ldy     VARLNG+7
+        sta     TR0
+        sty     TR1
         ldy     #$06
-        lda     ($0C),y
+        lda     (TR0),y
         sta     $C6
         tay
-        lda     ($0C),y
+        lda     (TR0),y
         cmp     #$80
 LC576:  beq     LC5B5
         dec     $C6
 LC57A:  inc     $C6
         ldy     $C6
-        lda     ($0C),y
+        lda     (TR0),y
         tax
         and     #$E0
         cmp     #$C0
@@ -841,7 +875,7 @@ LC59A:  jsr     LC676
         jmp     LC633
 
 LC5A2:  ldy     $C6
-        lda     ($0C),y
+        lda     (TR0),y
         bmi     LC5B5
         and     #$20
         bne     LC57A
@@ -858,12 +892,12 @@ LC5B5:  jsr     LC688
         jmp     LC4FA
 
 LC5C7:  ldy     #$04
-        lda     ($0C),y
+        lda     (TR0),y
         cmp     #$AB
         bne     LC5DA
         jsr     LC90C
         sec
-        ror     $B0
+        ror     VARLNG+36
         jsr     LCCCC
         bcs     LC5FD
 LC5DA:  jsr     LC688
@@ -874,12 +908,12 @@ LC5DA:  jsr     LC688
         ldx     #$00
         jsr     LC676
         bcc     LC5FD
-        bit     $B0
+        bit     VARLNG+36
         bpl     LC633
         ldx     #$13
         jsr     LC676
 LC5F4:  bcs     LC633
-        lsr     $B0
+        lsr     VARLNG+36
         jsr     LCCCC
         bcc     LC5DA
 LC5FD:  jsr     LC909
@@ -888,8 +922,8 @@ LC600:  jmp     LC4FA
 LC603:  jsr     LCAEE
         lda     #$00
         ldy     #$06
-        sta     $0C
-        sty     $0D
+        sta     TR0
+        sty     TR1
         lda     $0601
         ldx     $0602
         cpx     #$CC
@@ -912,23 +946,23 @@ LC62A:  lda     $C2
 
 LC633:  bit     FLGTEL
         bmi     LC654
-        lda     $0220
+        lda     SCRX
         pha
         lda     $0224
         pha
         ldx     #$00
         jsr     LD581
         ldy     $CA
-        ldx     LC6CA,y
+        ldx     TABLE1,y
         jsr     LD581
         pla
         tay
         pla
         tax
-        jsr     LC3AB
+        jsr     ROUTINE11
 LC654:  clc
         lda     $C4
-        adc     $8E
+        adc     VARLNG+2
         tax
         sec
         ldy     #$80
@@ -937,13 +971,13 @@ LC654:  clc
 LC65E:  inc     $C6
         iny
         clc
-        lda     ($0C),y
-        adc     $0C
+        lda     (TR0),y
+        adc     TR0
         tax
         dey
-        lda     ($0C),y
+        lda     (TR0),y
         and     #$1F
-        adc     $0D
+        adc     TR1
         pha
         txa
         pha
@@ -973,8 +1007,8 @@ LC695:  cmp     #$00
 LC69B:  rts
 
 LC69C:  .byte   $E5
-LC69D:  dec     $EA
-        dec     $0D
+LC69D:  dec     VARAPL+26
+        dec     TR1
         .byte   $C7
         lsr     $3BC9,x
         .byte   $C7
@@ -1000,124 +1034,37 @@ LC69D:  dec     $EA
         .byte   $C7
         .byte   $02
         .byte   $C7
-LC6CA:  ora     (RESB+1,x)
-        .byte   $04
-        brk
-        .byte   $07
-        .byte   $0C
-        ora     $0F0E
-        asl     a
-        php
-        ora     #$06
-        ora     RES
-        brk
-        .byte   $02
-        bpl     LC6F4
-        .byte   $12
-        ora     ($15),y
-        brk
-        brk
-        .byte   $0B
-        .byte   $02
-        asl     $14,x
-        cmp     #$3A
-        jmp     LC7DD
-
-LC6EB:  jsr     LCBC6
-        bcs     LC76A
-LC6F0:  ldx     #$03
-        .byte   $20
-        .byte   $05
-LC6F4:  dex
-        bcs     LC6FD
-        jsr     LCE06
-        jmp     LC6EB
-
-LC6FD:  bit     $BA
-        bmi     LC76A
-        clc
-        rts
-
-        bne     LC70A
-        lda     #$46
-        jmp     LCA69
-
-LC70A:  lda     #$02
-        sta     $CA
-LC70E:  jsr     LCBC6
-        bcs     LC76A
-LC713:  ldx     #$03
-        jsr     LCA05
-        bcs     LC730
-        ldy     #$04
-        lda     ($92),y
-        cmp     #$15
-        beq     LC72A
-        cmp     #$17
-        bcc     LC736
-        cmp     #$20
-        bcs     LC736
-LC72A:  jsr     LCE06
-        jmp     LC70E
-
-LC730:  bit     $BA
-        bpl     LC76A
-        clc
-        rts
-
-LC736:  lda     #$1A
-        sta     $CA
-        sec
-        rts
-
-        jsr     LCBC6
-        bcs     LC76A
-        bit     $BA
-        bpl     LC6F0
-        bmi     LC713
-        jsr     LC7F9
-        bcs     LC76A
-        ldx     $0106
-        cpx     #$07
-        beq     LC76A
-        cmp     #$24
-        bne     LC76A
-LC757:  jsr     LCD8A
-        inc     $0106
-        cmp     #$28
-        bne     LC767
-        jsr     LC865
-        jmp     LC78A
-
-LC767:  jmp     LC85F
-
-LC76A:  sec
-        rts
-
-        jsr     LC7F9
-        bcs     LC76A
-        ldx     $0106
-        cpx     #$07
-        beq     LC76A
-LC778:  jsr     LC688
-        cmp     #$28
-        bne     LC785
-        jsr     LC868
-        jmp     LC78A
-
-LC785:  jmp     LC862
-
-        clc
-        rts
-
-LC78A:  ldx     #$0A
-        jsr     LC676
-        lda     $94
-        pha
-        jsr     LC674
+; 25 pouet
+TABLE1: .byte   $01,$03,$04,$00,$07,$0C,$0D,$0E
+        .byte   $0F,$0A,$08,$09,$06,$05,$00,$00
+        .byte   $02,$10,$17,$12,$11,$15,$00,$00
+        .byte   $0B,$02,$16,$14,$C9,$3A,$4C,$DD
+        .byte   $C7,$20,$C6,$CB,$B0,$7A,$A2,$03
+        .byte   $20,$05,$CA,$B0,$06,$20,$06,$CE
+        .byte   $4C,$EB,$C6,$24,$BA,$30,$69,$18
+        .byte   $60,$D0,$05,$A9,$46,$4C,$69,$CA
+        .byte   $A9,$02,$85,$CA,$20,$C6,$CB,$B0
+        .byte   $57,$A2,$03,$20,$05,$CA,$B0,$16
+        .byte   $A0,$04,$B1,$92,$C9,$15,$F0,$08
+        .byte   $C9,$17,$90,$10,$C9,$20,$B0,$0C
+        .byte   $20,$06,$CE,$4C,$0E,$C7,$24,$BA
+        .byte   $10,$36,$18,$60,$A9,$1A,$85,$CA
+        .byte   $38,$60,$20,$C6,$CB,$B0,$29,$24
+        .byte   $BA,$10,$AB,$30,$CC,$20,$F9,$C7
+        .byte   $B0,$1E,$AE,$06,$01,$E0,$07,$F0
+        .byte   $17,$C9,$24,$D0,$13
+LC757:  .byte   $20,$8A,$CD,$EE,$06,$01,$C9,$28
+        .byte   $D0,$06,$20,$65,$C8,$4C,$8A,$C7
+        .byte   $4C,$5F,$C8
+LC76A:  .byte   $38,$60,$20,$F9,$C7,$B0,$F9,$AE
+        .byte   $06,$01,$E0,$07,$F0,$F2
+LC778:  .byte   $20,$88,$C6,$C9,$28,$D0,$06,$20
+        .byte   $68,$C8,$4C,$8A,$C7,$4C,$62,$C8
+        .byte   $18,$60,$A2,$0A,$20,$76,$C6,$A5
+        .byte   $94,$48,$20,$74,$C6
         pla
         bcs     LC76A
-        sta     $94
+        sta     VARLNG+8
         ldx     #$0B
         jsr     LC676
         bcs     LC76A
@@ -1174,12 +1121,12 @@ LC7F7:  sec
         .byte   $24
 LC7F9:  clc
         ror     RES
-        sty     $94
+        sty     VARLNG+8
         ldx     #$07
         stx     $C8
         jsr     LC9D3
         bcc     LC7F5
-LC807:  ldx     #$03
+        ldx     #$03
         jsr     LCA05
         bcc     LC7F5
         jsr     LC688
@@ -1223,22 +1170,18 @@ LC852:  ldx     $C8
 LC859:  lda     #$06
         .byte   $2C
 LC85C:  lda     #$07
-        .byte   $2C
-LC85F:  lda     #$08
-        .byte   $2C
-LC862:  lda     #$09
-        .byte   $2C
-LC865:  lda     #$0C
-        .byte   $2C
-LC868:  lda     #$0D
-LC86A:  sta     $94
+        bit     $08A9
+        bit     $09A9
+        bit     $0CA9
+        bit     $0DA9
+LC86A:  sta     VARLNG+8
         ldx     #$07
         ldy     #$01
         lda     $0106
         jsr     LC9EA
         bcc     LC8B0
         ldy     #$02
-        lda     $94
+        lda     VARLNG+8
         cmp     #$0C
         bcc     LC884
         cmp     #$0E
@@ -1258,7 +1201,7 @@ LC898:  lda     #$00
         jsr     LCD8C
         dey
         bne     LC898
-LC8A0:  lda     $94
+LC8A0:  lda     VARLNG+8
         ldy     #$00
         jsr     LCD96
         ldx     $0104
@@ -1266,17 +1209,17 @@ LC8A0:  lda     $94
         jmp     LC8B8
 
 LC8B0:  ldy     #$04
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tax
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
 LC8B8:  pha
         txa
         jsr     LCA7A
         pla
         jsr     LCA7A
         ldy     #$02
-        lda     ($92),y
+        lda     (VARLNG+6),y
         cmp     #$0B
         beq     LC913
         cmp     #$0C
@@ -1437,7 +1380,7 @@ LC9EA:  pha
         pla
         bcs     LCA02
 LC9F5:  ldy     #$06
-        cmp     ($92),y
+        cmp     (VARLNG+6),y
         beq     LCA03
         pha
         jsr     LCA35
@@ -1456,7 +1399,7 @@ LCA05:  clc
         adc     #$00
         sta     $BD
         txa
-        sta     $94
+        sta     VARLNG+8
 LCA15:  sec
         lda     $BC
         sbc     #$07
@@ -1465,42 +1408,42 @@ LCA15:  sec
         dec     $BD
 LCA20:  ldx     #$B9
         lda     #$DF
-LCA24:  stx     $92
-        sta     $93
+LCA24:  stx     VARLNG+6
+        sta     VARLNG+7
         ldy     #$01
-        lda     ($92),y
+        lda     (VARLNG+6),y
         beq     LCA67
         iny
-        lda     ($92),y
-        cmp     $94
+        lda     (VARLNG+6),y
+        cmp     VARLNG+8
         beq     LCA40
 LCA35:  ldy     #$00
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tax
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         jmp     LCA24
 
 LCA40:  ldy     #$06
-        lda     ($92),y
+        lda     (VARLNG+6),y
         sec
         sbc     #$07
-        sta     $95
+        sta     VARLNG+9
 LCA49:  iny
         lda     ($BC),y
-        ldx     $94
+        ldx     VARLNG+8
         cpx     #$10
         bcs     LCA55
         jsr     LCB45
-LCA55:  cmp     ($92),y
+LCA55:  cmp     (VARLNG+6),y
         bne     LCA35
-        dec     $95
+        dec     VARLNG+9
         bne     LCA49
         ldy     #$04
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tax
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         clc
         rts
 
@@ -1529,13 +1472,13 @@ LCA7A:  ldx     $C5
 
 LCA8A:  tya
         pha
-        ldy     $96
+        ldy     VARLNG+10
         cpy     #$D0
         bcc     LCAAD
         tya
         sbc     #$D0
         sta     RES
-        lda     $97
+        lda     VARLNG+11
         ldx     #$05
 LCA9B:  lsr     RES
         ror     a
@@ -1555,38 +1498,40 @@ LCAAD:  ldx     #$B9
         bcc     LCAB9
         ldx     #$9F
         lda     #$E8
-LCAB9:  stx     $92
-        sta     $93
+LCAB9:  stx     VARLNG+6
+        sta     VARLNG+7
         ldy     #$04
-        lda     ($92),y
-        cmp     $96
+        lda     (VARLNG+6),y
+        cmp     VARLNG+10
         bne     LCADD
         iny
-        lda     ($92),y
-        cmp     $97
+        lda     (VARLNG+6),y
+        cmp     VARLNG+11
         bne     LCADD
         ldy     #$03
-        lda     ($92),y
-        sta     $95
+        lda     (VARLNG+6),y
+        sta     VARLNG+9
         tax
         dey
-        lda     ($92),y
-        sta     $94
+        lda     (VARLNG+6),y
+        sta     VARLNG+8
         pla
         tay
-        lda     $94
+        lda     VARLNG+8
         rts
 
 LCADD:  ldy     #$00
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tax
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         jmp     LCAB9
 
-LCAE8:  lda     $8C
+; $CAE8
+ROUTINE19:
+        lda     VARLNG
         and     #$BF
-        sta     $8C
+        sta     VARLNG
 LCAEE:  lda     $07FB
         ldy     $07FC
         dey
@@ -1594,43 +1539,43 @@ LCAEE:  lda     $07FB
         sty     $CC
         lda     #$D0
         ldy     #$00
-        sta     $96
-        sty     $97
+        sta     VARLNG+10
+        sty     VARLNG+11
         sty     RES
         ldx     $07FD
         lda     $07FE
-LCB09:  stx     $92
-        sta     $93
+LCB09:  stx     VARLNG+6
+        sta     VARLNG+7
         ldy     #$01
-        lda     ($92),y
+        lda     (VARLNG+6),y
         beq     LCB4F
 LCB13:  ldy     #$05
-        lda     ($92),y
-        cmp     $97
+        lda     (VARLNG+6),y
+        cmp     VARLNG+11
         dey
-        lda     ($92),y
-        sbc     $96
+        lda     (VARLNG+6),y
+        sbc     VARLNG+10
         bcs     LCB2B
         ldy     #$00
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tax
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         jmp     LCB09
 
 LCB2B:  ldy     RES
-        lda     $92
+        lda     VARLNG+6
         sta     ($CB),y
         iny
-        lda     $93
+        lda     VARLNG+7
         sta     ($CB),y
         iny
         sty     RES
         lda     #$3F
-        adc     $97
-        sta     $97
+        adc     VARLNG+11
+        sta     VARLNG+11
         bcc     LCB13
-        inc     $96
+        inc     VARLNG+10
         bcs     LCB13
 LCB45:  cmp     #$61
         bcc     LCB4F
@@ -1690,7 +1635,7 @@ LCB95:  stx     $C4
 
 LCBA9:  jsr     LCD8A
         beq     LCBBD
-        sta     $0E
+        sta     TR2
         jsr     LCD8A
         cmp     #$27
         bne     LCBC0
@@ -1704,11 +1649,11 @@ LCBC0:  lda     #$15
 LCBC4:  sec
         rts
 
-LCBC6:  ldx     #$07
+        ldx     #$07
         stx     $C8
         ldx     #$00
-        stx     $0E
-        stx     $0F
+        stx     TR2
+        stx     TR3
         jsr     LC688
         cmp     #$28
         bne     LCBFD
@@ -1759,8 +1704,8 @@ LCC21:  ldx     #$02
         bcs     LCBF7
         jsr     LCE06
         ldy     #$03
-        lda     ($92),y
-        sta     $95
+        lda     (VARLNG+6),y
+        sta     VARLNG+9
         cmp     #$02
         bcc     LCC97
         lda     $CA
@@ -1768,7 +1713,7 @@ LCC21:  ldx     #$02
         ldx     #$0A
         jsr     LC676
         bcs     LCC65
-        lda     $95
+        lda     VARLNG+9
         ldx     #$01
         cmp     #$04
         bcc     LCC48
@@ -1834,7 +1779,7 @@ LCCAA:  lda     $CA
         sta     $CA
         bcs     LCCCA
         lda     #$10
-        ldx     $94
+        ldx     VARLNG+8
         cpx     #$08
         beq     LCCC5
         cpx     #$0C
@@ -1902,7 +1847,7 @@ LCD0E:  iny
         rts
 
 LCD2A:  brk
-        stx     $F0
+        stx     VARAPL+32
         asl     a
         lda     $65
         bmi     LCD38
@@ -1924,9 +1869,9 @@ LCD42:  lda     str_char,y
         jmp     LCD7D
 
 LCD55:  lda     $6B
-        sta     $0F
+        sta     TR3
         lda     $6C
-        sta     $0E
+        sta     TR2
         jmp     LCD67
 
 LCD60:  pla
@@ -1937,9 +1882,9 @@ LCD60:  pla
 
 LCD67:  ldx     $C8
         stx     $0106
-        lda     $0E
+        lda     TR2
         jsr     LCD8C
-        lda     $0F
+        lda     TR3
         jsr     LCD8C
         lda     #$11
         jsr     LC86A
@@ -1965,15 +1910,15 @@ LCD96:  sta     $0102
         sty     $0103
         sec
         lda     L005E
-        sta     $06
+        sta     DECFIN
         sbc     #$06
         sta     $10
-        sta     $04
+        sta     DECDEB
         lda     $5F
-        sta     $07
+        sta     DECFIN+1
         sbc     #$00
         sta     $11
-        sta     $05
+        sta     DECDEB+1
         ldy     #$04
         lda     ($10),y
         sta     $0104
@@ -1984,11 +1929,11 @@ LCD96:  sta     $0102
         lda     $10
         adc     $C8
         sta     L0100
-        sta     $08
+        sta     DECCIB
         lda     $11
         adc     #$00
         sta     $0101
-        sta     $09
+        sta     DECCIB+1
         brk
         clc
         clc
@@ -2020,19 +1965,19 @@ LCDF9:  lda     L0100,y
         bpl     LCDF9
 LCE01:  rts
 
-LCE02:  sta     $92
-        sty     $93
+LCE02:  sta     VARLNG+6
+        sty     VARLNG+7
 LCE06:  ldy     #$04
-        lda     ($92),y
+        lda     (VARLNG+6),y
         pha
         jsr     LCA7A
         cmp     #$C0
         bcc     LCE18
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         jsr     LCA7A
 LCE18:  ldy     #$06
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tay
         sec
         sbc     #$07
@@ -2052,29 +1997,31 @@ LCE18:  ldy     #$06
         jmp     LC90C
 
 LCE3B:  ldy     #$06
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tay
         dey
 LCE41:  iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         bpl     LCE41
         iny
         and     #$E0
         cmp     #$C0
         bne     LCE4E
         iny
-LCE4E:  lda     ($92),y
+LCE4E:  lda     (VARLNG+6),y
         rts
 
-LCE51:  lda     $07B5
+; $CE51
+ROUTINE13:
+        lda     $07B5
         ldy     $07B6
         sta     $07F7
         sty     $07F8
         rts
 
-LCE5E:  jsr     LCE51
+LCE5E:  jsr     ROUTINE13
 LCE61:  lda     #$00
-        sta     $0E
+        sta     TR2
         sta     $BF
         lda     $07F5
         ldy     $07F6
@@ -2082,22 +2029,22 @@ LCE61:  lda     #$00
         sty     RES+1
 LCE71:  ldx     $07FD
         lda     $07FE
-LCE77:  stx     $0C
-        sta     $0D
+LCE77:  stx     TR0
+        sta     TR1
         ldy     #$02
-        lda     ($0C),y
+        lda     (TR0),y
         tax
         ldy     #$06
-        lda     ($0C),y
+        lda     (TR0),y
         cpx     #$08
         beq     LCE8E
         cpx     #$0C
         bne     LCEBD
         adc     #$01
 LCE8E:  clc
-        adc     $0C
+        adc     TR0
         sta     $12
-        lda     $0D
+        lda     TR1
         adc     #$00
         sta     $13
         cpx     #$08
@@ -2110,23 +2057,23 @@ LCE9D:  jsr     LCED9
         sta     $12
         bcc     LCEAD
         inc     $13
-LCEAD:  cmp     ($0C),y
+LCEAD:  cmp     (TR0),y
         bne     LCE9D
         lda     $13
         iny
-        cmp     ($0C),y
+        cmp     (TR0),y
         bne     LCE9D
         beq     LCEBD
 LCEBA:  jsr     LCED9
 LCEBD:  ldy     #$00
-        lda     ($0C),y
+        lda     (TR0),y
         tax
         iny
-        lda     ($0C),y
+        lda     (TR0),y
         bne     LCE77
         lda     $BF
         bne     LCE61
-        ldx     $0E
+        ldx     TR2
         beq     LCF23
         ldy     RES+1
         lda     RES
@@ -2136,7 +2083,7 @@ LCEBD:  ldy     #$00
 LCED9:  ldy     #$00
         lda     ($12),y
         beq     LCF23
-        sta     $0F
+        sta     TR3
         iny
         lda     $BF
         beq     LCEFD
@@ -2166,8 +2113,8 @@ LCEFD:  lda     ($12),y
         tya
         sbc     $07F8
         bcs     LCF23
-        lda     $0F
-        sta     $0E
+        lda     TR3
+        sta     TR2
         stx     RES
         sty     RES+1
         lda     $12
@@ -2233,28 +2180,28 @@ LCF78:  dey
 LCF80:  rts
 
 LCF81:  ldy     #$03
-        lda     ($0C),y
+        lda     (TR0),y
         tax
         ldy     #$06
-        lda     ($0C),y
+        lda     (TR0),y
         tay
         txa
         beq     LCF98
         lda     #$0B
-        sta     ($0C),y
+        sta     (TR0),y
         iny
         lda     #$00
-        sta     ($0C),y
+        sta     (TR0),y
         dey
 LCF98:  tya
         pha
-        lda     ($0C),y
+        lda     (TR0),y
         tax
         iny
-        lda     ($0C),y
+        lda     (TR0),y
         pha
         ldy     #$02
-        lda     ($0C),y
+        lda     (TR0),y
         tay
         pla
         jsr     LD002
@@ -2264,50 +2211,50 @@ LCF98:  tya
         bcc     LCFB1
         inx
 LCFB1:  clc
-        adc     $0C
-        sta     $08
+        adc     TR0
+        sta     DECCIB
         txa
-        adc     $0D
-        sta     $09
+        adc     TR1
+        sta     DECCIB+1
         sec
         ldy     #$00
-        lda     $08
-        sbc     ($0C),y
-        sta     $0F
+        lda     DECCIB
+        sbc     (TR0),y
+        sta     TR3
         iny
-        lda     $09
-        sbc     ($0C),y
+        lda     DECCIB+1
+        sbc     (TR0),y
         sta     $10
-        ora     $0F
+        ora     TR3
         beq     LD001
         lda     L005E
         ldy     $5F
-        sta     $06
-        sty     $07
+        sta     DECFIN
+        sty     DECFIN+1
         clc
-        adc     $0F
+        adc     TR3
         sta     L005E
         tya
         adc     $10
         sta     $5F
         ldy     #$00
-        lda     ($0C),y
-        sta     $04
+        lda     (TR0),y
+        sta     DECDEB
         iny
-        lda     ($0C),y
-        sta     $05
+        lda     (TR0),y
+        sta     DECDEB+1
         brk
         clc
-        lda     $0C
+        lda     TR0
         pha
         tax
-        lda     $0D
+        lda     TR1
         pha
-        jsr     LC3C2
+        jsr     ROUTINE17
         pla
-        sta     $0D
+        sta     TR1
         pla
-        sta     $0C
+        sta     TR0
         jmp     LFDEA
 
 LD001:  rts
@@ -2339,34 +2286,34 @@ LD025:  stx     RES+1
         rts
 
 LD029:  ldx     #$18
-        jmp     LD17E
+        jmp     ROUTINE8
 
 LD02E:  jsr     LD1F7
         ldy     #$06
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tay
         lda     L0061
-        cmp     ($92),y
+        cmp     (VARLNG+6),y
         lda     $62
         iny
-        sbc     ($92),y
+        sbc     (VARLNG+6),y
         bcs     LD029
         ldy     #$02
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tay
         ldx     L0061
         lda     $62
         jsr     LD002
         clc
         ldy     #$06
-        adc     ($92),y
+        adc     (VARLNG+6),y
         bcc     LD056
         inx
         clc
-LD056:  adc     $92
+LD056:  adc     VARLNG+6
         pha
         txa
-        adc     $93
+        adc     VARLNG+7
         tax
         pla
         rts
@@ -2396,9 +2343,9 @@ LD056:  adc     $92
         bit     $38
         ldx     $07A0
         lda     $07A1,x
-        sta     $93
+        sta     VARLNG+7
         lda     $07A0,x
-        sta     $92
+        sta     VARLNG+6
         dex
         dex
         stx     $07A0
@@ -2406,8 +2353,8 @@ LD056:  adc     $92
         jsr     LD02E
         sta     $C4
         stx     $C5
-        lda     $92
-        ldy     $93
+        lda     VARLNG+6
+        ldy     VARLNG+7
         sta     $BC
         sty     $BD
         lda     #$FF
@@ -2418,7 +2365,7 @@ LD0B1:  jsr     LD02E
         sta     RES
         stx     RES+1
         ldy     #$02
-        lda     ($92),y
+        lda     (VARLNG+6),y
         cmp     #$0C
         beq     LD0D4
         jsr     LD0DC
@@ -2507,7 +2454,9 @@ LD155:  bit     FLGTEL
         bmi     LD173
         rts
 
-LD15B:  lda     FLGTEL
+; $D15B
+ROUTINE7:
+        lda     FLGTEL
         lsr     a
         bcs     LD179
         rts
@@ -2518,7 +2467,7 @@ LD162:  ldy     $8B
         beq     LD17C
         ldx     #$16
         dey
-        beq     LD17E
+        beq     ROUTINE8
         dex
         .byte   $2C
 LD170:  ldx     #$00
@@ -2530,25 +2479,27 @@ LD176:  ldx     #$02
 LD179:  ldx     #$0B
         .byte   $2C
 LD17C:  ldx     #$14
-LD17E:  stx     $07B7
+; $D17E
+ROUTINE8:
+        stx     $07B7
         ldy     #$00
         sty     $8B
         iny
-        lda     ($99),y
+        lda     (VARLNG+13),y
         sta     $07B8
         iny
-        lda     ($99),y
+        lda     (VARLNG+13),y
         sta     $07B9
         cmp     #$FF
         beq     LD19B
-        lda     $8C
+        lda     VARLNG
         and     #$04
         bne     LD1CC
 LD19B:  brk
-        and     $20
-        .byte   $7B
-        cmp     $AC,x
-        lda     LC807,y
+        .byte   $25
+        jsr     ROUTINE9
+        ldy     $07B9
+        iny
         beq     LD1BD
         ldx     #$04
         jsr     ROUTINE1
@@ -2558,18 +2509,18 @@ LD19B:  brk
         ldy     $07B9
         ldx     #$03
         brk
-        and     #$A9
-        and     #$00
+        .byte   $29
+        lda     #$29
+        brk
         .byte   $10
 LD1BD:  brk
-        and     $AC
-        .byte   $B7
-        .byte   $07
+        .byte   $25
+        ldy     $07B7
         cpy     #$13
         beq     LD1CC
         ldx     #$FF
         txs
-        jmp     LC068
+        jmp     ROUTINE10
 
 LD1CC:  ldx     $07BE
         inx
@@ -2590,7 +2541,7 @@ LD1EA:  lda     $C2
         pha
         lda     $0700
         pha
-        jmp     LC068
+        jmp     ROUTINE10
 
 LD1F4:  ldx     #$08
         .byte   $2C
@@ -2719,7 +2670,7 @@ LD2C5:  lda     $60,x
         jmp     LD51E
 
 LD2D2:  ldx     #$11
-        jmp     LD17E
+        jmp     ROUTINE8
 
 LD2D7:  lda     $BA
         bpl     LD2D2
@@ -2760,9 +2711,9 @@ LD314:  lda     #$00
         pla
         tay
         pla
-        sta     $8E
+        sta     VARLNG+2
         pla
-        sta     $8F
+        sta     VARLNG+3
         pla
         sta     RES
         pla
@@ -2777,9 +2728,9 @@ LD314:  lda     #$00
         sta     $6B
         pla
         sta     $6C
-        lda     $8F
+        lda     VARLNG+3
         pha
-        lda     $8E
+        lda     VARLNG+2
         pha
         tya
         pha
@@ -2821,17 +2772,17 @@ LD35E:  jsr     LD1F7
         sty     $66
         iny
         lda     (RESB),y
-        sta     $92
+        sta     VARLNG+6
         iny
         lda     (RESB),y
-        sta     $93
-        lda     ($92),y
+        sta     VARLNG+7
+        lda     (VARLNG+6),y
         tax
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         pha
         ldy     #$06
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tay
         pla
         cpx     #$10
@@ -2841,10 +2792,10 @@ LD35E:  jsr     LD1F7
 LD39B:  tya
         sbc     #$07
         sta     $60
-        lda     $92
+        lda     VARLNG+6
         adc     #$06
         sta     L0061
-        lda     $93
+        lda     VARLNG+7
         adc     #$00
         bcc     LD3DE
 LD3AC:  cpx     #$11
@@ -2855,12 +2806,12 @@ LD3AC:  cpx     #$11
         bne     LD3CE
         cmp     #$00
         bne     LD3E9
-LD3BC:  lda     ($92),y
+LD3BC:  lda     (VARLNG+6),y
         sta     L0061
         iny
-        ora     ($92),y
+        ora     (VARLNG+6),y
         sta     $60
-        lda     ($92),y
+        lda     (VARLNG+6),y
         sta     $62
         lda     #$00
         sta     $BA
@@ -2868,13 +2819,13 @@ LD3BC:  lda     ($92),y
 
 LD3CE:  cpx     #$08
         bne     LD3E5
-        lda     ($92),y
+        lda     (VARLNG+6),y
         sta     $60
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         sta     L0061
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
 LD3DE:  sta     $62
         lda     #$80
         sta     $BA
@@ -2882,21 +2833,21 @@ LD3DE:  sta     $62
 
 LD3E5:  cpx     #$12
         bne     LD409
-LD3E9:  lda     ($92),y
+LD3E9:  lda     (VARLNG+6),y
         sta     $60
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         sta     $65
         ora     #$80
         sta     L0061
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         sta     $62
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         sta     $63
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         sta     $64
         lda     #$40
         sta     $BA
@@ -2954,14 +2905,14 @@ LD451:  jsr     LD486
 
 LD459:  cpx     #$C3
         beq     LD484
-        lda     $9C,x
+        lda     VARLNG+16,x
         beq     LD4C7
-        lda     $9D,x
+        lda     VARLNG+17,x
         beq     LD4A5
-        lda     $9E,x
+        lda     VARLNG+18,x
         bpl     LD49D
         and     #$7F
-        sta     $9E,x
+        sta     VARLNG+18,x
         jsr     LD486
         clc
         eor     #$FF
@@ -2984,52 +2935,52 @@ LD486:  cpx     #$C3
         lda     $BA
         jmp     LD491
 
-LD48F:  lda     $9C,x
+LD48F:  lda     VARLNG+16,x
 LD491:  beq     LD4C7
         cpx     #$C3
         bne     LD49D
         lda     $65
         bmi     LD4CC
         bpl     LD4A5
-LD49D:  lda     $9E,x
+LD49D:  lda     VARLNG+18,x
         bmi     LD4CC
         ora     #$80
-        sta     $9E,x
-LD4A5:  lda     $9D,x
+        sta     VARLNG+18,x
+LD4A5:  lda     VARLNG+17,x
         beq     LD4CF
         bpl     LD4CC
         cmp     #$91
         bcs     LD4CC
         lda     #$91
-        sbc     $9D,x
+        sbc     VARLNG+17,x
         tay
 LD4B4:  dey
         bmi     LD4BE
-        lsr     $9E,x
-        ror     $9F,x
+        lsr     VARLNG+18,x
+        ror     VARLNG+19,x
         jmp     LD4B4
 
-LD4BE:  lda     $9F,x
-        ldy     $9E,x
-        sta     $9E,x
-        sty     $9F,x
+LD4BE:  lda     VARLNG+19,x
+        ldy     VARLNG+18,x
+        sta     VARLNG+18,x
+        sty     VARLNG+19,x
         rts
 
-LD4C7:  lda     $9E,x
-        ldy     $9F,x
+LD4C7:  lda     VARLNG+18,x
+        ldy     VARLNG+19,x
 LD4CB:  rts
 
 LD4CC:  jmp     LF0FF
 
 LD4CF:  lda     #$00
         tay
-        sta     $9E,x
-        sty     $9F,x
+        sta     VARLNG+18,x
+        sty     VARLNG+19,x
         rts
 
 LD4D7:  ldx     $C9
         lda     $BA
-        sta     $9C,x
+        sta     VARLNG+16,x
         cmp     #$40
         bne     LD4E8
         lda     $65
@@ -3037,15 +2988,15 @@ LD4D7:  ldx     $C9
         and     L0061
         .byte   $2C
 LD4E8:  lda     L0061
-        sta     $9E,x
+        sta     VARLNG+18,x
         lda     $60
-        sta     $9D,x
+        sta     VARLNG+17,x
         lda     $62
-        sta     $9F,x
+        sta     VARLNG+19,x
         lda     $63
-        sta     $A0,x
+        sta     VARLNG+20,x
         lda     $64
-        sta     $A1,x
+        sta     VARLNG+21,x
         ldy     #$FF
         sty     $C3
         txa
@@ -3057,12 +3008,12 @@ LD4E8:  lda     L0061
         tsx
         clc
         pla
-        sta     $99
+        sta     VARLNG+13
         sta     $07BC
         adc     #$02
         pha
         ldy     $0102,x
-        sty     $9A
+        sty     VARLNG+14
         bcc     LD528
         inc     $0102,x
         bcs     LD528
@@ -3080,15 +3031,15 @@ LD528:  sty     $07BD
         sta     $02A8
         dex
         stx     $C3
-        bit     $8C
+        bit     VARLNG
         bmi     LD545
         rts
 
 LD545:  ldy     #$01
-        lda     ($99),y
+        lda     (VARLNG+13),y
         pha
         iny
-        lda     ($99),y
+        lda     (VARLNG+13),y
         tay
         pla
         jsr     LD559
@@ -3116,9 +3067,11 @@ LD559:  ldx     #$00
 
 LD573:  asl     $027E
         ldx     #$13
-        jmp     LD17E
+        jmp     ROUTINE8
 
-LD57B:  lda     #$96
+; $D57B
+ROUTINE9:
+        lda     #$96
         ldy     #$D6
         bne     LD591
 LD581:  lda     #$70
@@ -3398,13 +3351,13 @@ LD8A0:  ldx     #$0A
         jsr     LDF6B
         lda     $07FD
         ldx     $07FE
-LD8AB:  sta     $92
-        stx     $93
+LD8AB:  sta     VARLNG+6
+        stx     VARLNG+7
         ldy     #$01
-        lda     ($92),y
+        lda     (VARLNG+6),y
         beq     LD8D7
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         cmp     #$06
         beq     LD8C4
         cmp     #$0C
@@ -3413,12 +3366,12 @@ LD8AB:  sta     $92
         bcs     LD8C9
 LD8C4:  iny
         lda     #$03
-        sta     ($92),y
+        sta     (VARLNG+6),y
 LD8C9:  ldy     #$01
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tax
         dey
-        lda     ($92),y
+        lda     (VARLNG+6),y
         jmp     LD8AB
 
 LD8D4:  jmp     LD998
@@ -3427,29 +3380,29 @@ LD8D7:  ldx     #$0B
         jsr     LDF6B
         lda     $5C
         ldx     $5D
-        stx     $0D
-LD8E2:  sta     $0C
+        stx     TR1
+LD8E2:  sta     TR0
         ldy     #$00
-        lda     ($0C),y
+        lda     (TR0),y
         beq     LD8D4
         ldy     #$04
-        lda     ($0C),y
+        lda     (TR0),y
         beq     LD91C
         cmp     #$C0
         bne     LD95D
         iny
-        lda     ($0C),y
+        lda     (TR0),y
         cmp     #$CC
         bne     LD95D
         ldy     #$09
         jsr     LD96C
         ldy     #$06
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tay
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tax
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         inx
         bne     LD911
         clc
@@ -3463,62 +3416,62 @@ LD911:  pha
 
 LD91C:  iny
         jsr     LD96C
-        lda     $95
+        lda     VARLNG+9
         cmp     #$03
         beq     LD942
         ldx     #$07
         jsr     LD58D
         ldy     #$06
-        lda     ($92),y
+        lda     (VARLNG+6),y
         sta     RESB
         iny
         cpy     RESB
         beq     LD93D
-        lda     ($92),y
+        lda     (VARLNG+6),y
         brk
         bpl     LD987
-        and     ($D9),y
+        and     (VARAPL+9),y
 LD93D:  ldx     #$08
         jsr     LD58D
 LD942:  ldy     #$02
-        lda     ($0C),y
+        lda     (TR0),y
         pha
         dey
-        lda     ($0C),y
+        lda     (TR0),y
         pha
 LD94B:  ldy     #$03
         lda     #$00
-        sta     ($92),y
+        sta     (VARLNG+6),y
         ldy     #$06
-        lda     ($92),y
+        lda     (VARLNG+6),y
 LD955:  tay
         pla
-        sta     ($92),y
+        sta     (VARLNG+6),y
         iny
         pla
-        sta     ($92),y
+        sta     (VARLNG+6),y
 LD95D:  clc
         ldy     #$00
-        lda     ($0C),y
-        adc     $0C
+        lda     (TR0),y
+        adc     TR0
         bcc     LD968
-        inc     $0D
+        inc     TR1
 LD968:  jmp     LD8E2
 
 LD96B:  rts
 
-LD96C:  lda     ($0C),y
-        sta     $96
+LD96C:  lda     (TR0),y
+        sta     VARLNG+10
         iny
-        lda     ($0C),y
-        sta     $97
+        lda     (TR0),y
+        sta     VARLNG+11
         jmp     LCA8A
 
 LD978:  ldx     #$01
         jsr     LD58D
         sec
         ldy     #$06
-        lda     ($0C),y
+        lda     (TR0),y
         sbc     #$07
         tax
 LD985:  iny
@@ -3530,20 +3483,20 @@ LD987:  .byte   $0C
         ldx     #$06
         bit     $04A2
         sec
-        ror     $B5
+        ror     VARLNG+41
         jmp     LD58D
 
 LD998:  ldx     #$0C
         jsr     LDF6B
         ldx     $07FD
         lda     $07FE
-LD9A3:  stx     $0C
-        sta     $0D
+LD9A3:  stx     TR0
+        sta     TR1
         ldy     #$01
-        lda     ($0C),y
+        lda     (TR0),y
         beq     LD96B
         iny
-        lda     ($0C),y
+        lda     (TR0),y
         cmp     #$07
         beq     LD9D0
         cmp     #$06
@@ -3557,16 +3510,16 @@ LD9A3:  stx     $0C
         jmp     LD9F8
 
 LD9C9:  iny
-        lda     ($0C),y
+        lda     (TR0),y
         cmp     #$03
         beq     LD9F8
 LD9D0:  ldy     #$06
-        lda     ($0C),y
+        lda     (TR0),y
         tay
-        lda     ($0C),y
+        lda     (TR0),y
         pha
         iny
-        lda     ($0C),y
+        lda     (TR0),y
         tay
         pla
         jsr     LD0ED
@@ -3575,27 +3528,27 @@ LD9D0:  ldy     #$06
         jmp     LD9F8
 
 LD9E8:  ldy     #$06
-        lda     ($0C),y
+        lda     (TR0),y
         tay
         iny
         iny
         lda     L00BE
-        sta     ($0C),y
+        sta     (TR0),y
         iny
         lda     $BF
-        sta     ($0C),y
+        sta     (TR0),y
 LD9F8:  ldy     #$00
-        lda     ($0C),y
+        lda     (TR0),y
         tax
         iny
-        lda     ($0C),y
+        lda     (TR0),y
         jmp     LD9A3
 
 LDA03:  inx
         inx
         inx
         stx     $C3
-        lsr     $B5
+        lsr     VARLNG+41
         ldy     #$00
         sty     L07F9
         sty     $07FA
@@ -3625,19 +3578,19 @@ LDA3D:  sta     $C0
         sta     L00BE
         sty     $BF
         lda     #$FF
-        sta     $99
-        sta     $9A
+        sta     VARLNG+13
+        sta     VARLNG+14
         jsr     LDC07
         jsr     LDAB8
         lda     L00BE
         ldy     $BF
         sta     $07F5
         sty     $07F6
-        bit     $8C
+        bit     VARLNG
         bvs     LDAAE
         ldx     #$0D
         jsr     LDF6B
-        jsr     LFDA5
+        jsr     ROUTINE12
         lda     L07F9
         ldy     $07FA
         sta     L00BE
@@ -3652,11 +3605,11 @@ LDA7B:  sta     $C0
         sta     $C3
         iny
         lda     ($C0),y
-        sta     $99
+        sta     VARLNG+13
         iny
         lda     ($C0),y
-        sta     $9A
-        bit     $8D
+        sta     VARLNG+14
+        bit     VARLNG+1
         bmi     LDAA0
         lda     #$0D
         brk
@@ -3672,11 +3625,11 @@ LDAA0:  jsr     LDC07
         bcc     LDA7B
         inc     $C1
         bcs     LDA7B
-LDAAE:  bit     $B5
+LDAAE:  bit     VARLNG+41
         bmi     LDABD
-        lda     $8C
+        lda     VARLNG
         ora     #$40
-        sta     $8C
+        sta     VARLNG
 LDAB8:  lda     #$60
         jmp     LDF5C
 
@@ -3699,12 +3652,12 @@ LDACE:  ldx     $C4
 LDADA:  pla
         beq     LDACE
         pla
-        sta     $92
+        sta     VARLNG+6
         pla
-        sta     $93
+        sta     VARLNG+7
         jsr     LDF23
         ldy     #$04
-        lda     ($92),y
+        lda     (VARLNG+6),y
         cmp     #$08
         bcc     LDADA
         cmp     #$0D
@@ -3712,9 +3665,9 @@ LDADA:  pla
         pha
         cmp     #$0B
         bne     LDB01
-        lda     $B7
+        lda     VARLNG+43
         jsr     LDF7B
-        lda     $B6
+        lda     VARLNG+42
         jsr     LDF7B
 LDB01:  lda     $BF
         jsr     LDF7B
@@ -3813,24 +3766,24 @@ LDBBF:  lda     #$08
         jsr     LDF90
         bcs     LDBF9
         jsr     LDF85
-        sta     $97
+        sta     VARLNG+11
         jsr     LDF85
-        sta     $96
+        sta     VARLNG+10
         ldy     $C4
         cpy     #$07
         bne     LDBE4
         dey
         lda     ($C0),y
-        cmp     $97
+        cmp     VARLNG+11
         bne     LDBF9
         dey
         lda     ($C0),y
-        cmp     $96
+        cmp     VARLNG+10
         bne     LDBF9
 LDBE4:  jsr     LCA8A
-        lda     $92
+        lda     VARLNG+6
         jsr     LDF5C
-        lda     $93
+        lda     VARLNG+7
         jsr     LDF5C
         lda     #$4C
         jsr     LDF5C
@@ -3848,14 +3801,14 @@ LDC07:  ldy     #$03
         sty     $C4
         clc
         lda     L00BE
-        sta     $B6
+        sta     VARLNG+42
         adc     ($C0),y
-        sta     $B1
+        sta     VARLNG+37
         lda     $BF
-        sta     $B7
+        sta     VARLNG+43
         adc     #$00
-        sta     $B2
-        lsr     $B0
+        sta     VARLNG+38
+        lsr     VARLNG+36
         ldy     #$04
         lda     ($C0),y
         cmp     #$C0
@@ -3875,8 +3828,8 @@ LDC2E:  lda     #$00
         ldx     #$07
         ldy     #$D5
         jsr     LDF52
-        ldx     $99
-        ldy     $9A
+        ldx     VARLNG+13
+        ldy     VARLNG+14
         jsr     LDF57
 LDC48:  inc     $C4
         lda     $C4
@@ -3906,9 +3859,9 @@ LDC73:  pla
         cmp     #$2D
         beq     LDC84
         pla
-        sta     $92
+        sta     VARLNG+6
         pla
-        sta     $93
+        sta     VARLNG+7
         jsr     LDF23
         jmp     LDC73
 
@@ -3918,9 +3871,9 @@ LDC84:  pla
         bne     LDC6C
         pla
         pla
-        sta     $92
+        sta     VARLNG+6
         pla
-        sta     $93
+        sta     VARLNG+7
         jsr     LDF23
         jmp     LDC48
 
@@ -3942,21 +3895,21 @@ LDCB2:  jsr     LDF52
         inc     $C4
         jmp     LDC48
 
-LDCBA:  sta     $8F
+LDCBA:  sta     VARLNG+3
 LDCBC:  pla
         cmp     #$01
         beq     LDCD1
         cmp     #$2D
         beq     LDCD1
         pla
-        sta     $92
+        sta     VARLNG+6
         pla
-        sta     $93
+        sta     VARLNG+7
         jsr     LDF23
         jmp     LDCBC
 
 LDCD1:  pha
-        lda     $8F
+        lda     VARLNG+3
 LDCD4:  sec
         sbc     #$20
         tax
@@ -3990,17 +3943,17 @@ LDD09:  cmp     #$B5
 LDD0D:  pla
         beq     LDD1C
         pla
-        sta     $92
+        sta     VARLNG+6
         pla
-        sta     $93
+        sta     VARLNG+7
         jsr     LDF23
         jmp     LDD0D
 
 LDD1C:  pha
         lda     L00BE
         ldy     $BF
-        sta     $B3
-        sty     $B4
+        sta     VARLNG+39
+        sty     VARLNG+40
         jmp     LDD51
 
 LDD28:  cmp     #$B4
@@ -4008,9 +3961,9 @@ LDD28:  cmp     #$B4
 LDD2C:  pla
         beq     LDD3B
         pla
-        sta     $92
+        sta     VARLNG+6
         pla
-        sta     $93
+        sta     VARLNG+7
         jsr     LDF23
         jmp     LDD2C
 
@@ -4019,26 +3972,26 @@ LDD3B:  pha
         clc
         lda     L00BE
         adc     #$03
-        sta     ($B3),y
+        sta     (VARLNG+39),y
         iny
         lda     $BF
         adc     #$00
-        sta     ($B3),y
+        sta     (VARLNG+39),y
         lda     #$4C
         jsr     LDF5C
-LDD51:  lda     $B1
+LDD51:  lda     VARLNG+37
         jsr     LDF5C
-        lda     $B2
+        lda     VARLNG+38
         jsr     LDF5C
         ldy     $C4
         iny
         lda     ($C0),y
         cmp     #$D0
         bcc     LDD8C
-        sta     $96
+        sta     VARLNG+10
         iny
         lda     ($C0),y
-        sta     $97
+        sta     VARLNG+11
         jsr     LCA8A
         cmp     #$06
         beq     LDD79
@@ -4065,9 +4018,9 @@ LDD9A:  pla
         cmp     #$01
         beq     LDDAB
         pla
-        sta     $92
+        sta     VARLNG+6
         pla
-        sta     $93
+        sta     VARLNG+7
         jsr     LDF23
         jmp     LDD9A
 
@@ -4077,7 +4030,7 @@ LDDAB:  pha
         jsr     LDF52
         jmp     LDC48
 
-LDDB6:  sta     $96
+LDDB6:  sta     VARLNG+10
         cmp     #$C0
         bcc     LDDC2
         iny
@@ -4085,12 +4038,12 @@ LDDB6:  sta     $96
         lda     ($C0),y
         .byte   $2C
 LDDC2:  lda     #$00
-        sta     $97
+        sta     VARLNG+11
         jsr     LCA8A
         cmp     #$01
         bne     LDE20
         tax
-        lda     $96
+        lda     VARLNG+10
         beq     LDE19
         cmp     #$A1
         beq     LDDE4
@@ -4106,28 +4059,28 @@ LDDE4:  jsr     LDF23
         ldy     $C4
         iny
         lda     ($C0),y
-        sta     $96
+        sta     VARLNG+10
         iny
         lda     ($C0),y
-        sta     $97
+        sta     VARLNG+11
         jsr     LCA8A
 LDDF6:  ldy     #$03
-        lda     ($92),y
+        lda     (VARLNG+6),y
         beq     LDE07
-        lda     $92
-        ldy     $93
-        sta     $0C
-        sty     $0D
+        lda     VARLNG+6
+        ldy     VARLNG+7
+        sta     TR0
+        sty     TR1
         jsr     LD978
 LDE07:  ldy     #$06
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tay
         iny
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         jsr     LDF5C
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         jsr     LDF5C
 LDE19:  inc     $C4
         inc     $C4
@@ -4149,14 +4102,14 @@ LDE35:  ldx     #$CB
         lda     #$20
         jsr     LDF5C
         ldy     #$06
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tay
         iny
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         jsr     LDF5C
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         jsr     LDF5C
         lda     #$EA
         jsr     LDF5C
@@ -4196,7 +4149,7 @@ LDE90:  ldx     #$68
         jmp     LDC48
 
 LDE9A:  clc
-LDE9B:  ror     $91
+LDE9B:  ror     VARLNG+5
 LDE9D:  pla
         pha
         cmp     #$50
@@ -4205,31 +4158,31 @@ LDE9D:  pla
         lda     $0104,x
         cmp     $0101,x
         bcc     LDED8
-        lda     $92
+        lda     VARLNG+6
         sta     RES
-        lda     $93
+        lda     VARLNG+7
         sta     RES+1
         pla
         sta     $0104,x
         lda     $0105,x
-        sta     $92
+        sta     VARLNG+6
         pla
         sta     $0105,x
         lda     $0106,x
-        sta     $93
+        sta     VARLNG+7
         pla
         sta     $0106,x
         jsr     LDF23
         lda     RES
-        sta     $92
+        sta     VARLNG+6
         lda     RES+1
-        sta     $93
+        sta     VARLNG+7
         jmp     LDE9D
 
-LDED8:  bit     $91
+LDED8:  bit     VARLNG+5
         bmi     LDEF8
         ldy     #$02
-        lda     ($92),y
+        lda     (VARLNG+6),y
         cmp     #$02
         bne     LDEEA
         jsr     LDF23
@@ -4259,9 +4212,9 @@ LDF10:  cmp     #$03
         jmp     LDC48
 
 LDF17:  tax
-LDF18:  lda     $93
+LDF18:  lda     VARLNG+7
         pha
-        lda     $92
+        lda     VARLNG+6
         pha
         txa
         pha
@@ -4272,9 +4225,9 @@ LDF23:  jsr     LCE3B
         bpl     LDF36
         sec
         tya
-        adc     $92
+        adc     VARLNG+6
         tax
-        lda     $93
+        lda     VARLNG+7
         adc     #$00
         tay
         jmp     LDF52
@@ -4282,32 +4235,32 @@ LDF23:  jsr     LCE3B
 LDF36:  dex
         bmi     LDF6A
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         jsr     LDF5C
         jmp     LDF36
 
 LDF42:  ldx     #$68
         ldy     #$D3
 LDF46:  jsr     LDF52
-        lda     $92
+        lda     VARLNG+6
         jsr     LDF5C
-        lda     $93
+        lda     VARLNG+7
         bne     LDF5C
 LDF52:  lda     #$20
         jsr     LDF5C
 LDF57:  txa
         jsr     LDF5C
         tya
-LDF5C:  stx     $8E
+LDF5C:  stx     VARLNG+2
         ldx     #$00
         sta     (L00BE,x)
         inc     L00BE
         bne     LDF68
         inc     $BF
-LDF68:  ldx     $8E
+LDF68:  ldx     VARLNG+2
 LDF6A:  rts
 
-LDF6B:  bit     $8D
+LDF6B:  bit     VARLNG+1
         bmi     LDF6A
         jmp     LD58D
 
@@ -4355,7 +4308,7 @@ LDFB8:  rts
         brk
         brk
         php
-        eor     a:$8C,x
+        eor     a:VARLNG,x
         .byte   $DF
         .byte   $DF
         ora     (RES,x)
@@ -4371,7 +4324,7 @@ LDFD5:  dec     $C2
         rts
 
 LDFDA:  ldx     #$19
-        jmp     LD17E
+        jmp     ROUTINE8
 
         .byte   $EF
         .byte   $DF
@@ -4383,7 +4336,7 @@ LDFDA:  ldx     #$19
         .byte   $44
         .byte   $80
         .byte   $03
-LDFEB:  jmp     LC068
+LDFEB:  jmp     ROUTINE10
 
         rts
 
@@ -4406,7 +4359,7 @@ LDFFC:  jsr     LD573
         .byte   $27
         stx     $6D00
         cpx     #$01
-        ora     ($08,x)
+        ora     (DECCIB,x)
         brk
         asl     a
         lsr     $4F
@@ -4477,7 +4430,7 @@ LE062:  lda     LFF66,y
         .byte   $4F
         eor     $4E,x
         .byte   $54
-        sta     ($05,x)
+        sta     (DECDEB+1,x)
         jsr     LE08F
         bpl     LE0B6
 LE08F:  ldx     #$C3
@@ -4524,9 +4477,9 @@ LE0BD:  .byte   $D7
         jmp     L2710
 
 LE0D2:  ldx     #$17
-        jmp     LD17E
+        jmp     ROUTINE8
 
-        bit     $E2
+        bit     VARAPL+18
         ora     (RES+1,x)
         ora     $0B00
         lsr     $5845
@@ -4713,7 +4666,7 @@ LE221:  jmp     LC906
         eor     $4E,x
         .byte   $54
         eor     #$4C
-        sty     $05
+        sty     DECDEB+1
         lda     $60
         bne     LE239
         jmp     LE252
@@ -4758,7 +4711,7 @@ LE26C:  sta     $07EE
         jsr     L07ED
         jmp     LD162
 
-        stx     $E2
+        stx     VARAPL+18
         .byte   $03
         .byte   $5F
         .byte   $13
@@ -4769,7 +4722,7 @@ LE26C:  sta     $07EE
         .byte   $83
         lda     #$6C
         bne     LE26C
-        sty     $E2,x
+        sty     VARAPL+18,x
         .byte   $03
         .byte   $5F
         .byte   $14
@@ -4780,7 +4733,7 @@ LE26C:  sta     $07EE
         .byte   $83
         lda     #$6D
         bne     LE26C
-        dec     $E2
+        dec     VARAPL+18
         .byte   $03
         .byte   $5A
         ora     RES,x
@@ -4808,7 +4761,7 @@ LE26C:  sta     $07EE
 LE2BD:  lda     #$6A
         bne     LE26C
 LE2C1:  ldx     #$1A
-        jmp     LD17E
+        jmp     ROUTINE8
 
         .byte   $D4
         .byte   $E2
@@ -4829,7 +4782,7 @@ LE2C1:  ldx     #$1A
         and     L8380,x
         lda     #$02
         bne     LE329
-        sbc     ($E2),y
+        sbc     (VARAPL+18),y
         .byte   $03
         cli
         clc
@@ -4874,7 +4827,7 @@ LE2C1:  ldx     #$1A
         .byte   $80
         .byte   $83
         lda     #$04
-LE329:  sta     $90
+LE329:  sta     VARLNG+4
         bit     $BA
         bmi     LE376
         jsr     LD311
@@ -4944,7 +4897,7 @@ LE399:  lda     ($69),y
 LE3A5:  inx
         txa
         rol     a
-        and     $90
+        and     VARLNG+4
         beq     LE3AE
         lda     #$01
 LE3AE:  sta     L0061
@@ -5074,7 +5027,7 @@ LE468:  .byte   $3A
         brk
 LE490:  brk
 LE491:  .byte   $03
-        asl     $09
+        asl     DECCIB+1
         ora     #$0C
         .byte   $0F
         .byte   $12
@@ -5099,12 +5052,12 @@ LE491:  .byte   $03
         lsr     $5752
 LE4B9:  ldx     #$00
         stx     $BA
-        stx     $9C
+        stx     VARLNG+16
         stx     L0061
         stx     $62
         dex
-        stx     $9E
-        stx     $9F
+        stx     VARLNG+18
+        stx     VARLNG+19
         rts
 
         lda     #$90
@@ -5115,7 +5068,7 @@ LE4CF:  lda     #$8F
         bne     LE4D9
 LE4D5:  lda     #$8E
         ldy     #$C0
-LE4D9:  sty     $9B
+LE4D9:  sty     VARLNG+15
         pha
         lda     #$12
         sta     $07EB
@@ -5131,7 +5084,7 @@ LE4EC:  rts
         lda     #$10
         sta     $07EB
         lda     #$00
-        sta     $9B
+        sta     VARLNG+15
         rts
 
 LE4F7:  jsr     LD1F7
@@ -5228,7 +5181,7 @@ LE55D:  rts
         stx     L0061
         rts
 
-        lda     $E5
+        lda     VARAPL+21
         .byte   $02
         .byte   $02
         sta     RES
@@ -5243,7 +5196,7 @@ LE599:  sta     $07EE
         jsr     L07ED
         jmp     LD162
 
-        lda     $E5,x
+        lda     VARAPL+21,x
         .byte   $02
         .byte   $02
         stx     RES
@@ -5253,7 +5206,7 @@ LE599:  sta     $07EE
         .byte   $83
         lda     #$74
         bne     LE599
-        cpy     $E5
+        cpy     VARAPL+21
         .byte   $02
         .byte   $02
         .byte   $87
@@ -5347,10 +5300,10 @@ LE641:  clc
         .byte   $24
 LE643:  sec
         ldy     #$00
-LE646:  ror     $8F
-        sty     $8E
+LE646:  ror     VARLNG+3
+        sty     VARLNG+2
         jsr     LCF5C
-        ldy     $8E
+        ldy     VARLNG+2
         beq     LE65B
         lda     $60
         beq     LE67A
@@ -5361,7 +5314,7 @@ LE646:  ror     $8F
 LE65B:  cpy     $60
         bcs     LE67A
         lda     (L0061),y
-        bit     $8F
+        bit     VARLNG+3
         bmi     LE671
         cmp     #$41
         bcc     LE674
@@ -5431,7 +5384,7 @@ LE6CD:  cpx     #$01
         sta     $0101
 LE6D7:  jmp     LE779
 
-        inc     $E6,x
+        inc     VARAPL+22,x
         .byte   $02
         .byte   $03
         .byte   $92
@@ -5543,7 +5496,7 @@ LE779:  lda     #$00
         .byte   $9F
         .byte   $E7
         .byte   $02
-        ora     $96
+        ora     VARLNG+10
         brk
         asl     a
         .byte   $41
@@ -5566,7 +5519,7 @@ LE794:  sta     L0061
 
         bcs     LE788
         .byte   $02
-        ora     $97
+        ora     VARLNG+11
         brk
         asl     a
         jmp     L4E45
@@ -5579,7 +5532,7 @@ LE794:  sta     L0061
         .byte   $DB
         .byte   $E7
         .byte   $02
-        ora     $98
+        ora     VARLNG+12
         brk
         asl     a
         lsr     $41,x
@@ -5588,17 +5541,17 @@ LE794:  sta     L0061
 LE7BC:  ldy     $60
         lda     (L0061),y
         pha
-        sty     $0C
+        sty     TR0
         lda     #$00
         sta     (L0061),y
         lda     L0061
         ldy     $62
-        sta     $0D
-        sty     $0E
+        sta     TR1
+        sty     TR2
         brk
         adc     #$68
-        ldy     $0C
-        sta     ($0D),y
+        ldy     TR0
+        sta     (TR1),y
         lda     #$40
         sta     $BA
         rts
@@ -5617,12 +5570,12 @@ LE7BC:  ldy     $60
         .byte   $2C
 LE7EB:  lda     #$00
         ldy     #$00
-LE7EF:  sta     $8E
-        sty     $8F
+LE7EF:  sta     VARLNG+2
+        sty     VARLNG+3
         jsr     LD40A
-        lda     $8F
+        lda     VARLNG+3
         sta     $62
-        lda     $8E
+        lda     VARLNG+2
 LE7FC:  sta     L0061
         ora     $62
         sta     $60
@@ -5657,7 +5610,7 @@ LE7FC:  sta     L0061
         sta     $BA
         rts
 
-        eor     ($E8),y
+        eor     (VARAPL+24),y
         .byte   $02
         .byte   $02
         .byte   $9C
@@ -5696,7 +5649,7 @@ LE850:  rts
 LE863:  rts
 
         sta     $02E8
-        ora     ($9E,x)
+        ora     (VARLNG+18,x)
         brk
         .byte   $0B
         .byte   $4B
@@ -5772,7 +5725,7 @@ LE884:  lda     #$00
         rts
 
 LE8D3:  ldx     #$1B
-        jmp     LD17E
+        jmp     ROUTINE8
 
         sbc     #$E8
         ora     (RES,x)
@@ -5893,7 +5846,7 @@ LE9A4:  inx
         lda     L0100,x
         bne     LE9A4
         beq     LE996
-        cmp     ($E9,x)
+        cmp     (VARAPL+25,x)
         ora     (RES,x)
         lda     RES
         ora     $504C
@@ -5905,7 +5858,7 @@ LE9A4:  inx
         lda     #$29
         jmp     LE8F9
 
-        dec     $E9,x
+        dec     VARAPL+25,x
         ora     (RES,x)
         ldx     RES
         ora     $5053
@@ -5931,7 +5884,7 @@ LE9A4:  inx
         lda     #$28
         jmp     LE8F9
 
-        ora     ($EA),y
+        ora     (VARAPL+26),y
         ora     (RES,x)
         tay
         brk
@@ -5939,7 +5892,7 @@ LE9A4:  inx
         .byte   $47
         eor     $54
         .byte   $23
-        and     $EF
+        and     VARAPL+31
         .byte   $83
         lda     #$01
         jsr     LCF52
@@ -5980,7 +5933,7 @@ LEA22:  brk
         brk
         bpl     LEA58
         .byte   $DB
-        cmp     $A9,x
+        cmp     VARLNG+29,x
         php
         brk
         bpl     LEA09
@@ -6034,7 +5987,7 @@ LEA74:  jsr     LE7BC
         brk
         ora     #$49
         lsr     $24
-        ldy     $05,x
+        ldy     DECDEB+1,x
         lda     $60
         bne     LEA9A
         jmp     LEACB
@@ -6065,9 +6018,9 @@ LEAA0:  .byte   $52
         iny
         lda     (RES),y
         sta     $07BB
-        lda     $8C
+        lda     VARLNG
         ora     #$04
-        sta     $8C
+        sta     VARLNG
         rts
 
 LEACB:  .byte   $1F
@@ -6128,7 +6081,7 @@ LEB0A:  pla
         .byte   $7B
         .byte   $EB
         .byte   $02
-        asl     $AE
+        asl     VARLNG+34
         brk
         .byte   $0C
         jmp     L4645
@@ -6188,7 +6141,7 @@ LEB63:  sta     $63
 
         cpy     #$EB
         .byte   $02
-        asl     $AF
+        asl     VARLNG+35
         brk
         ora     $4952
         .byte   $47
@@ -6204,14 +6157,14 @@ LEB63:  sta     $63
         ldx     $63
         bcs     LEB3A
 LEB98:  .byte   $53
-        eor     $D4
+        eor     VARAPL+4
         .byte   $4F
         lsr     $C6
         .byte   $54
         .byte   $CF
         .byte   $53
         .byte   $54
-        eor     $D0
+        eor     VARAPL
         eor     $4C
         .byte   $53
         cmp     $54
@@ -6297,12 +6250,12 @@ LEC27:  .byte   $53
         .byte   $54
         .byte   $52
         eor     ($43,x)
-        eor     $90
+        eor     VARLNG+4
         .byte   $83
         php
-        asl     $8C
+        asl     VARLNG
         plp
-        ror     $8C
+        ror     VARLNG
         bpl     LEC4E
         lda     #$8B
         brk
@@ -6311,7 +6264,7 @@ LEC27:  .byte   $53
         ldy     #$02
         ldx     #$03
         brk
-        rol     $A9,x
+        rol     VARLNG+29,x
         .byte   $8B
         brk
         .byte   $03
@@ -6334,28 +6287,28 @@ LEC57:  cpy     #$04
         .byte   $80
         .byte   $83
         lda     #$01
-LEC62:  sta     $94
+LEC62:  sta     VARLNG+8
         ldx     #$B9
         lda     #$DF
-LEC68:  stx     $92
-        sta     $93
+LEC68:  stx     VARLNG+6
+        sta     VARLNG+7
         ldy     #$02
-        lda     ($92),y
-        cmp     $94
+        lda     (VARLNG+6),y
+        cmp     VARLNG+8
         bne     LEC96
         cmp     #$01
         bne     LEC7D
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         bne     LEC96
 LEC7D:  sec
         ldy     #$06
-        lda     ($92),y
+        lda     (VARLNG+6),y
 LEC82:  sbc     #$07
         tax
         beq     LEC96
 LEC87:  iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         brk
         bpl     LEC57
         bne     LEC87
@@ -6365,10 +6318,10 @@ LEC87:  iny
         cmp     #$F1
 LEC96:  clc
         ldy     #$00
-        lda     ($92),y
+        lda     (VARLNG+6),y
         tax
         iny
-        lda     ($92),y
+        lda     (VARLNG+6),y
         bne     LEC68
         lda     #$0D
         brk
@@ -6384,7 +6337,7 @@ LEC96:  clc
 LECB4:  .byte   $80
         .byte   $83
         jsr     ROUTINE2
-        jmp     LC068
+        jmp     ROUTINE10
 
         .byte   $E7
         cpx     a:RES+1
@@ -6394,7 +6347,7 @@ LECB4:  .byte   $80
         eor     $4E,x
         cpy     #$19
         .byte   $83
-        jsr     LFDA5
+        jsr     ROUTINE12
         lda     L0061
         ldy     $62
         jsr     LD0ED
@@ -6410,7 +6363,7 @@ LECB4:  .byte   $80
 LECE5:  clc
         rts
 
-        inc     $EC,x
+        inc     VARAPL+28,x
         ora     (RES,x)
         cpy     #$08
         .byte   $0B
@@ -6447,7 +6400,7 @@ LED0A:  ora     (RES,x)
         jsr     LD44F
         .byte   $A0
 LED21:  brk
-        sta     ($9E),y
+        sta     (VARLNG+18),y
 LED24:  rts
 
 LED25:  ldy     $60
@@ -6455,7 +6408,7 @@ LED27:  tya
         beq     LED24
         dey
         lda     (L0061),y
-        sta     ($9E),y
+        sta     (VARLNG+18),y
         jmp     LED27
 
         bvc     LED21
@@ -6470,10 +6423,10 @@ LED27:  tya
         jsr     LD481
         jsr     LD484
         ldx     #$00
-        sta     ($9E,x)
+        sta     (VARLNG+18,x)
         tya
         ldy     #$01
-        sta     ($9E),y
+        sta     (VARLNG+18),y
         rts
 
         .byte   $63
@@ -6508,7 +6461,7 @@ LED60:  jmp     (L0061)
         .byte   $02
         brk
         .byte   $47
-LED82:  sty     $ED,x
+LED82:  sty     VARAPL+29,x
         ora     (RES,x)
         cpy     #$11
         asl     $5845
@@ -6528,7 +6481,7 @@ LED82:  sty     $ED,x
         .byte   $80
         .byte   $02
         brk
-        lsr     $B1
+        lsr     VARLNG+37
         sbc     a:RES+1
         cpy     #$13
         asl     a
@@ -6536,7 +6489,7 @@ LED82:  sty     $ED,x
         .byte   $80
         .byte   $03
         jsr     LEDC2
-        cmp     $ED,x
+        cmp     VARAPL+29,x
         ora     (RES,x)
 LEDB5:  cpy     #$14
         .byte   $0C
@@ -6551,7 +6504,7 @@ LEDC4:  ldy     #$C0
         sta     $0415
         sty     $0416
         lda     #$07
-        sta     $0417
+        sta     BNKCIB
         sei
         jmp     L040C
 
@@ -6566,7 +6519,7 @@ LEDD9:  cpy     #$15
         sta     ($83,x)
         jsr     LD44F
         clc
-        adc     $0228
+        adc     SCRDX
         adc     #$FF
         sta     $022C
         rts
@@ -6608,10 +6561,10 @@ LEE2B:  .byte   $A9
 LEE2C:  brk
 LEE2D:  sta     $07FB
         sty     $07FC
-        lda     $8C
+        lda     VARLNG
         and     #$BF
-        sta     $8C
-        jmp     LFDA5
+        sta     VARLNG
+        jmp     ROUTINE12
 
         bvc     LEE2C
         ora     (RES,x)
@@ -6688,11 +6641,11 @@ LEE8C:  ora     ($4A,x)
         lda     #$02
         jsr     LEC62
         brk
-        and     $A9
+        and     VARLNG+29
         .byte   $03
         jmp     LEC62
 
-        inc     $EE
+        inc     VARAPL+30
         ora     (RES,x)
         cpy     #$1F
         .byte   $0B
@@ -6701,14 +6654,14 @@ LEE8C:  ora     ($4A,x)
         ora     ($81,x)
         .byte   $83
         jsr     LD484
-        sta     $08
-        sty     $09
+        sta     DECCIB
+        sty     DECCIB+1
         jsr     LD481
-        sta     $04
-        sty     $05
+        sta     DECDEB
+        sty     DECDEB+1
         jsr     LD47E
-        sta     $06
-        sty     $07
+        sta     DECFIN
+        sty     DECFIN+1
         brk
         clc
         rts
@@ -6742,7 +6695,7 @@ LEF10:  brk
         .byte   $34
         rts
 
-        rol     $EF
+        rol     VARAPL+31
         ora     (RES,x)
         cpy     #$22
         .byte   $0B
@@ -6755,7 +6708,7 @@ LEF10:  brk
         pha
         rts
 
-        eor     ($EF,x)
+        eor     (VARAPL+31,x)
         ora     (RES,x)
         cpy     #$23
         .byte   $0B
@@ -6805,7 +6758,7 @@ LEF3A:  lda     $44
         sta     (L0061),y
         rts
 
-        sta     ($EF),y
+        sta     (VARAPL+31),y
         .byte   $02
         ora     ($C0,x)
         and     #$0B
@@ -6819,7 +6772,7 @@ LEF3A:  lda     $44
         ldx     #$03
         jmp     LCF62
 
-        lda     ($EF),y
+        lda     (VARAPL+31),y
         ora     (RES,x)
         cpy     #$2A
         asl     a
@@ -6839,7 +6792,7 @@ LEFA8:  eor     $8805,x
 
 LEFAE:  jmp     LF0FF
 
-        dec     $EF
+        dec     VARAPL+31
         ora     (RES,x)
         cpy     #$2B
         .byte   $0C
@@ -6895,7 +6848,7 @@ LEFF2:  cpy     #$35
         .byte   $52
         rts
 
-        asl     $F0,x
+        asl     VARAPL+32,x
         ora     (RES,x)
         cpy     #$36
         ora     $5246
@@ -6937,7 +6890,7 @@ LF032:  cpy     #$38
         jsr     LC4B1
         jmp     LEC04
 
-        stx     $F0
+        stx     VARAPL+32
         ora     (RES,x)
         cpy     #$3D
         .byte   $0C
@@ -6962,7 +6915,7 @@ LF063:  inx
         bne     LF05A
         brk
         and     RES
-        and     $A2
+        and     VARLNG+22
         .byte   $20
 LF06E:  txa
         jsr     LF333
@@ -6988,15 +6941,15 @@ LF08A:  cpy     #$3E
         .byte   $4B
         bcc     LF016
         php
-        lda     $8D
+        lda     VARLNG+1
         asl     a
         plp
         ror     a
         eor     #$80
-        sta     $8D
+        sta     VARLNG+1
         rts
 
-        lda     ($F0),y
+        lda     (VARAPL+32),y
         ora     (RES,x)
         cpy     #$48
         .byte   $0F
@@ -7025,7 +6978,7 @@ LF08A:  cpy     #$3E
         .byte   $3E
         rts
 
-LF0C8:  bit     $F1
+LF0C8:  bit     VARAPL+33
         ora     (RES,x)
         cpy     #$4A
         ora     $5353
@@ -7054,7 +7007,7 @@ LF0FB:  dey
         dey
         bpl     LF0DC
 LF0FF:  ldx     #$12
-        jmp     LD17E
+        jmp     ROUTINE8
 
 LF104:  .byte   $10
 LF105:  brk
@@ -7078,7 +7031,7 @@ LF11A:  bpl     LF12A
         jsr     L801C
         and     RES
         .byte   $4B
-        sty     $F1,x
+        sty     VARAPL+33,x
         ora     (RES,x)
         cpy     #$4B
 LF12A:  .byte   $0C
@@ -7170,10 +7123,10 @@ LF1A6:  txa
         .byte   $DB
         cmp     $68,x
         tax
-        stx     $0C
-        jsr     LD57B
+        stx     TR0
+        jsr     ROUTINE9
         jsr     LF1C7
-        ldx     $0C
+        ldx     TR0
         inx
 LF1C2:  cpx     #$1C
         bne     LF1A6
@@ -7285,7 +7238,7 @@ LF26C:  pha
         cli
         rts
 
-        sta     ($F2),y
+        sta     (VARAPL+34),y
         ora     (RES,x)
         cpy     #$50
         .byte   $0C
@@ -7297,7 +7250,7 @@ LF26C:  pha
         .byte   $83
         lda     #$0C
         bne     LF26C
-        ldy     $F2
+        ldy     VARAPL+34
         ora     (RES,x)
         cpy     #$51
         .byte   $0C
@@ -7308,7 +7261,7 @@ LF26C:  pha
         .byte   $83
         lda     #$18
         bne     LF26C
-        sbc     ($F2,x)
+        sbc     (VARAPL+34,x)
         ora     (RES,x)
         cpy     #$52
         .byte   $0B
@@ -7354,7 +7307,7 @@ LF2DE:  jmp     LF0FF
         bvc     LF339
         bvc     LF26C
         ora     $20
-        cmp     $DF,x
+        cmp     VARAPL+15,x
         pla
         pla
         .byte   $09
@@ -7434,7 +7387,7 @@ LF339:  bpl     LF39B
         .byte   $5F
         rts
 
-        ror     $F3,x
+        ror     VARAPL+35,x
         ora     (RES,x)
         cpy     #$58
         .byte   $0C
@@ -7584,7 +7537,7 @@ LF407:  rts
         .byte   $67
         rts
 
-        adc     $F4
+        adc     VARAPL+36
         ora     (RES,x)
         cpy     #$64
         .byte   $0B
@@ -7594,7 +7547,7 @@ LF407:  rts
         jsr     LD44F
         brk
         ror     $60
-        sty     $F4
+        sty     VARAPL+36
         .byte   $02
         .byte   $02
         cpy     #$65
@@ -7606,14 +7559,14 @@ LF407:  rts
         jsr     LD1F7
         and     #$07
         tax
-        ldy     $0220,x
+        ldy     SCRX,x
         cmp     #$04
         bcc     LF481
         ldy     $0286
 LF481:  sty     L0061
         rts
 
-        sty     $F4,x
+        sty     VARAPL+36,x
         ora     (RES,x)
 LF488:  cpy     #$68
         asl     a
@@ -7654,7 +7607,7 @@ LF4BD:  .byte   $0B
         stx     $83,y
         lda     #$50
         bne     LF4D9
-        sbc     ($F4,x)
+        sbc     (VARAPL+36,x)
         ora     (RES,x)
         cpy     #$72
         ora     $4E55
@@ -7666,7 +7619,7 @@ LF4BD:  .byte   $0B
 LF4D9:  pha
         jsr     LF995
         pla
-        jmp     LF964
+        jmp     ROUTINE6
 
         .byte   $FB
         .byte   $F4
@@ -7681,7 +7634,7 @@ LF4D9:  pha
         sta     $052F
         sta     $0530
         lda     #$5C
-        jmp     LF964
+        jmp     ROUTINE6
 
         lsr     a
         sbc     RES+1,x
@@ -7694,25 +7647,28 @@ LF4D9:  pha
         .byte   $82
         .byte   $83
         jsr     LF997
-LF50B:  lda     #$68
-        jsr     LF964
+; $F50B
+ROUTINE5:
+        lda     #$68
+        jsr     ROUTINE6
         lda     #$62
-LF512:  jsr     LF964
+LF512:  jsr     ROUTINE6
 LF515:  lda     $052C
         lsr     a
         lda     $052C
         bpl     LF53D
         lda     $052F
         ldy     $0530
-        .byte   $85
-LF525:  lsr     $5F84,x
+LF525           := * + 1
+        sta     L005E
+        sty     $5F
         php
-        jsr     LCAE8
+        jsr     ROUTINE19
         plp
         bcc     LF53A
         ldx     #$00
         jsr     LDA03
-        jsr     LFDA5
+        jsr     ROUTINE12
         jmp     (L07F9)
 
 LF53A:  jmp     LC0FF
@@ -7722,7 +7678,7 @@ LF53D:  bcc     LF549
 
         jsr     LF995
         cmp     #$02
-        bne     LF50B
+        bne     ROUTINE5
 LF549:  rts
 
         eor     $01F5,x
@@ -7853,7 +7809,7 @@ LF634:  lda     #$80
         sta     $0528
         jsr     LD138
         lda     #$6B
-        jmp     LF964
+        jmp     ROUTINE6
 
 LF641:  lda     L005E
         ldy     $5F
@@ -7867,7 +7823,7 @@ LF641:  lda     L005E
         sta     L0531
         .byte   $8D
 LF65B:  .byte   $32
-        ora     $A9
+        ora     VARLNG+29
         .byte   $80
         sta     $052C
         rts
@@ -7883,17 +7839,17 @@ LF65B:  .byte   $32
         .byte   $83
         jsr     LD155
         lda     $020C
-        sta     $0517
+        sta     BUFNOM
         ldx     $0209
         beq     LF682
         lda     #$01
-LF682:  sta     $0518
+LF682:  sta     BUFNOM+1
         lda     #$59
-        jsr     LF964
+        jsr     ROUTINE6
         jsr     ROUTINE2
         jmp     LDFEB
 
-        lda     ($F6),y
+        lda     (VARAPL+38),y
         ora     (RES,x)
         cpy     #$7B
         .byte   $0B
@@ -7916,7 +7872,7 @@ LF682:  sta     $0518
         brk
         rts
 
-        cpy     $F6
+        cpy     VARAPL+38
         ora     (RES,x)
         cpy     #$7C
         .byte   $0C
@@ -7925,7 +7881,7 @@ LF682:  sta     $0518
         eor     $82
         .byte   $83
         lda     #$3B
-        jmp     LF964
+        jmp     ROUTINE6
 
         .byte   $D7
         inc     RES+1,x
@@ -7967,7 +7923,7 @@ LF6FA:  sta     $0528
         sta     $0529
         jsr     LF722
         lda     #$38
-        jmp     LF964
+        jmp     ROUTINE6
 
         jmp     LF738
 
@@ -7982,15 +7938,15 @@ LF6FA:  sta     $0528
         .byte   $83
         jsr     LF722
         lda     #$47
-        jmp     LF964
+        jmp     ROUTINE6
 
-LF722:  ldx     $9D
-        lda     $9E
-        ldy     $9F
+LF722:  ldx     VARLNG+17
+        lda     VARLNG+18
+        ldy     VARLNG+19
 LF728:  brk
-        bit     $A2
+        bit     VARLNG+22
         .byte   $0C
-LF72C:  lda     $0517,x
+LF72C:  lda     BUFNOM,x
         sta     L0100,x
         dex
         bpl     LF72C
@@ -8008,7 +7964,7 @@ LF749:  ldx     #$02
 
 LF74E:  rts
 
-        adc     $F7
+        adc     VARAPL+39
         ora     (RES,x)
         cpy     #$83
         .byte   $0C
@@ -8018,7 +7974,7 @@ LF74E:  rts
         .byte   $83
         jsr     LF997
         lda     #$35
-        jmp     LF964
+        jmp     ROUTINE6
 
         .byte   $92
         .byte   $F7
@@ -8041,7 +7997,7 @@ LF781:  stx     $052C
         jsr     LD449
         sta     $0548
         lda     #$1A
-        jmp     LF964
+        jmp     ROUTINE6
 
         ora     #$F8
         ora     (RES,x)
@@ -8054,7 +8010,7 @@ LF781:  stx     $052C
         .byte   $83
         jsr     LF8E1
         lda     #$1D
-        jmp     LF964
+        jmp     ROUTINE6
 
 LF7A8:  jmp     LF0FF
 
@@ -8062,9 +8018,9 @@ LF7A8:  jmp     LF0FF
         lda     $65
         bpl     LF7B2
         dex
-LF7B2:  stx     $94
-LF7B4:  ldx     $06
-        ldy     $07
+LF7B2:  stx     VARLNG+8
+LF7B4:  ldx     DECFIN
+        ldy     DECFIN+1
         clc
         and     #$7F
         adc     #$07
@@ -8075,11 +8031,11 @@ LF7B4:  ldx     $06
 LF7C6:  rts
 
 LF7C7:  ldy     #$06
-        lda     $92
-        ldx     $93
+        lda     VARLNG+6
+        ldx     VARLNG+7
         sta     $BC
         stx     $BD
-        adc     ($92),y
+        adc     (VARLNG+6),y
         bcc     LF7D6
         inx
 LF7D6:  sta     $C4
@@ -8142,7 +8098,7 @@ LF83A:  pha
         sta     $052D
         sty     $052E
         pla
-        jmp     LF964
+        jmp     ROUTINE6
 
         eor     $01F8,x
         brk
@@ -8178,9 +8134,9 @@ LF867:  eor     $4E
 LF881:  pha
         jsr     LF8E1
         pla
-        jmp     LF964
+        jmp     ROUTINE6
 
-        lda     ($F8),y
+        lda     (VARAPL+40),y
         ora     (RES,x)
         cpy     #$8B
         .byte   $0B
@@ -8200,7 +8156,7 @@ LF881:  pha
         lsr     a
 LF8AA:  sta     $65
         lda     #$14
-        jmp     LF964
+        jmp     ROUTINE6
 
         inc     $01F8
         brk
@@ -8215,7 +8171,7 @@ LF8AA:  sta     $65
         .byte   $83
         jsr     LF8E7
         lda     #$17
-        jsr     LF964
+        jsr     ROUTINE6
 LF8C9:  lda     $65
         bmi     LF8DB
         lda     L0061
@@ -8248,7 +8204,7 @@ LF8EA:  sta     $0548
         jsr     LD22E
         sta     $0548
         lda     #$11
-        jsr     LF964
+        jsr     ROUTINE6
         lda     L0061
         jmp     LE7FC
 
@@ -8272,19 +8228,19 @@ LF90A:  jmp     LF0FF
         sta     $0544
         sta     $0545
         lda     #$2F
-        jsr     LF964
+        jsr     ROUTINE6
         sec
         lda     L07F9
-        sbc     $04
+        sbc     DECDEB
         sta     $07B5
         sta     $0542
         lda     $07FA
-        sbc     $05
+        sbc     DECDEB+1
         sta     $07B6
         sta     $0543
-        jmp     LFDA5
+        jmp     ROUTINE12
 
-        rol     $FA,x
+        rol     VARAPL+42,x
         ora     (RES,x)
         cpy     #$91
         .byte   $0C
@@ -8294,17 +8250,19 @@ LF90A:  jmp     LF0FF
         .byte   $83
         lda     #$0E
         jsr     LF4D9
-        jmp     LC068
+        jmp     ROUTINE10
 
-LF964:  sta     $0415
+; $F964
+ROUTINE6:
+        sta     $0415
         php
         txa
         pha
-        jsr     LD15B
+        jsr     ROUTINE7
         lda     #$FF
         sta     $0416
         lda     #$00
-        sta     $0417
+        sta     BNKCIB
         sta     $0512
         pla
         tsx
@@ -8321,7 +8279,7 @@ LF964:  sta     $0415
         clc
         adc     #$03
         tax
-        jmp     LD17E
+        jmp     ROUTINE8
 
 LF994:  rts
 
@@ -8329,7 +8287,7 @@ LF995:  clc
         .byte   $24
 LF997:  sec
         php
-        jsr     LD15B
+        jsr     ROUTINE7
         ldx     $60
         lda     L0061
         ldy     $62
@@ -8337,7 +8295,7 @@ LF997:  sec
         bit     $8A
         bmi     LF9C3
         plp
-        ldx     $0517
+        ldx     BUFNOM
         bcc     LF9B1
         cmp     #$02
         beq     LF9C3
@@ -8350,7 +8308,7 @@ LF9B8:  stx     $0500
         ldx     #$0D
         .byte   $2C
 LF9C3:  ldx     #$0C
-        jmp     LD17E
+        jmp     ROUTINE8
 
 LF9C8:  sty     $07EB
         pha
@@ -8371,7 +8329,7 @@ LF9E0:  clc
 LF9E4:  sta     $13
         ror     $12
         lda     #$00
-        sta     $90
+        sta     VARLNG+4
         sta     $02AB
         dec     $13
         beq     LFA13
@@ -8401,11 +8359,11 @@ LFA1C:  jsr     L07EA
 LFA25:  jmp     LF0FF
 
 LFA28:  jsr     LD459
-        ldx     $90
+        ldx     VARLNG+4
         sta     $4D,x
         sty     $4E,x
-        inc     $90
-        inc     $90
+        inc     VARLNG+4
+        inc     VARLNG+4
         rts
 
         .byte   $4B
@@ -8432,7 +8390,7 @@ LFA28:  jsr     LD459
         sta     ($83,x)
         ldy     #$91
         bne     LFA71
-        ror     $FA,x
+        ror     VARAPL+42,x
         ora     (RES,x)
         cpy     #$A2
         .byte   $0B
@@ -8458,7 +8416,7 @@ LFA73:  jmp     LF9C8
         ldy     #$8D
 LFA8A:  lda     #$05
         bne     LFA73
-        ldy     $FA
+        ldy     VARAPL+42
         ora     (RES,x)
         cpy     #$A4
         ora     $4943
@@ -8470,7 +8428,7 @@ LFA8A:  lda     #$05
         lda     #$02
         ldy     #$8F
         bne     LFA73
-        ldx     $FA,y
+        ldx     VARAPL+42,y
         ora     (RES,x)
         cpy     #$A5
         asl     a
@@ -8504,7 +8462,7 @@ LFA8A:  lda     #$05
         .byte   $52
         sta     (RESB+1,x)
         jsr     LFAEA
-        asl     $FB
+        asl     VARAPL+43
         ora     (RES,x)
         cpy     #$A8
         asl     a
@@ -8546,7 +8504,7 @@ LFB15:  lda     FLGTEL
         and     #$DF
         .byte   $8D
 LFB1B:  ora     $6002
-        and     $FB,x
+        and     VARAPL+43,x
         ora     (RES,x)
         cpy     #$AA
         .byte   $0C
@@ -8622,12 +8580,12 @@ LFB66:  .byte   $02
         ldx     #$00
         jsr     LFBD5
         brk
-        ora     ($A2,x)
+        ora     (VARLNG+22,x)
         asl     $20
         .byte   $DF
         .byte   $FB
         brk
-        ora     ($A2,x)
+        ora     (VARLNG+22,x)
         .byte   $0C
         jsr     LFBD5
         brk
@@ -8682,7 +8640,7 @@ LFBEB:  brk
         ldx     #$00
         jsr     LFBD5
         brk
-        ora     ($A2,x)
+        ora     (VARLNG+22,x)
         .byte   $C3
         jsr     LFBDF
         brk
@@ -8874,7 +8832,7 @@ str_error:
         sta     ($83,x)
         jsr     LD44F
         tax
-        jmp     LD17E
+        jmp     ROUTINE8
 
         sta     ($FD,x)
         ora     (RES,x)
@@ -8896,9 +8854,9 @@ str_erroff:
         .byte   "ERROFF"
         .byte   $80
         .byte   $83
-        lda     $8C
+        lda     VARLNG
         and     #$FB
-        sta     $8C
+        sta     VARLNG
         rts
 
         ora     #$FE
@@ -8910,19 +8868,21 @@ str_clear:
         .byte   "CLEAR"
         .byte   $80
         .byte   $83
-LFDA5:  jsr     LCE51
+; $FDA5
+ROUTINE12:
+        jsr     ROUTINE13
         ldx     #$FD
         lda     #$07
         ldy     #$01
-LFDAE:  stx     $0C
-        sta     $0D
-        lda     ($0C),y
+LFDAE:  stx     TR0
+        sta     TR1
+        lda     (TR0),y
         beq     LFE08
         iny
-        lda     ($0C),y
+        lda     (TR0),y
         tax
         ldy     #$06
-        lda     ($0C),y
+        lda     (TR0),y
         tay
         cpx     #$08
         beq     LFDD5
@@ -8936,32 +8896,32 @@ LFDCF:  jsr     LFDEA
         jmp     LFDDF
 
 LFDD5:  lda     #$00
-        sta     ($0C),y
+        sta     (TR0),y
         iny
-        sta     ($0C),y
+        sta     (TR0),y
         iny
-        sta     ($0C),y
+        sta     (TR0),y
 LFDDF:  ldy     #$00
-        lda     ($0C),y
+        lda     (TR0),y
         tax
         iny
-        lda     ($0C),y
+        lda     (TR0),y
         jmp     LFDAE
 
 LFDEA:  ldy     #$06
-        lda     ($0C),y
+        lda     (TR0),y
         sec
         adc     #$01
-        adc     $0C
+        adc     TR0
         sta     RES
         lda     #$00
-        adc     $0D
+        adc     TR1
         sta     RES+1
         ldy     #$01
-        lda     ($0C),y
+        lda     (TR0),y
         tax
         dey
-        lda     ($0C),y
+        lda     (TR0),y
         tay
         lda     #$00
         brk
@@ -9066,7 +9026,7 @@ str_aplic:
         sty     $4E
         lda     #$BF
 LFEAD:  ldy     #$03
-        sty     $0417
+        sty     BNKCIB
         ldy     #$FF
         sta     $0415
         sty     $0416
@@ -9231,7 +9191,7 @@ START_HYPERBASIC:
         ldx     #$05
         sta     $0415
         sty     $0416
-        stx     $0417
+        stx     BNKCIB
         jmp     L040C
 
         .byte   $00,$00,$00,$00,$00,$00,$00,$00
@@ -9244,11 +9204,11 @@ LFFE6:  jmp     LFFA4
         .byte   $4C
         .byte   $24
 LFFEB:  .byte   $C2
-        jmp     LCAE8
+        jmp     ROUTINE19
 
-        jmp     LC3C2
+        jmp     ROUTINE17
 
-        jmp     LC4E7
+        jmp     ROUTINE16
 
         jmp     ROUTINE2
 
