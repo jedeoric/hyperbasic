@@ -1,5 +1,5 @@
 ; da65 V2.15 - Git 8b68576
-; Created:    2016-07-14 11:55:00
+; Created:    2016-07-17 15:36:26
 ; Input file: hyperbas.rom
 ; Page:       1
 
@@ -34,6 +34,7 @@ VEXBNK          := $0414
 BNKCIB          := $0417
 BUFNOM          := $0517
 L0531           := $0531
+BUFEDT          := $0590
 L07BA           := $07BA
 L07C0           := $07C0
 L07EA           := $07EA
@@ -45,7 +46,6 @@ L1228           := $1228
 L208A           := $208A
 L244F           := $244F
 L2710           := $2710
-L4142           := $4142
 L4145           := $4145
 L414F           := $414F
 L424F           := $424F
@@ -142,7 +142,7 @@ LC06D:  ldx     #$06
         pha
         .byte   $24
 LC093:  inx
-        lda     $0590,x
+        lda     BUFEDT,x
         cmp     #$20
         beq     LC093
         txa
@@ -786,13 +786,13 @@ ROUTINE16:
         sty     $C2
         ldy     #$01
         sty     $C5
-        lda     $0590,x
+        lda     BUFEDT,x
         bne     LC4FA
         clc
         rts
 
 LC4FA:  ldx     $C4
-        lda     $0590,x
+        lda     BUFEDT,x
         cmp     #$3F
         bne     LC50E
         txa
@@ -805,7 +805,7 @@ LC50E:  ldx     #$01
         jsr     LCA05
         bcc     LC55C
         ldx     $C4
-LC517:  lda     $0590,x
+LC517:  lda     BUFEDT,x
         beq     LC54B
         cmp     #$3A
         beq     LC54B
@@ -996,7 +996,7 @@ LC676:  txa
         .byte   $2C
 LC686:  inc     $C4
 LC688:  ldx     $C4
-        lda     $0590,x
+        lda     BUFEDT,x
         cmp     #$20
         bne     LC695
         inc     $C4
@@ -1227,7 +1227,7 @@ LC8B8:  pha
         cmp     #$0D
         beq     LC906
         ldx     $C5
-        ldy     $05FD,x
+        ldy     BUFEDT+109,x
         cmp     #$07
         bne     LC8E4
         cpy     #$B5
@@ -1267,7 +1267,7 @@ LC913:  clc
         ldx     #$07
         stx     $C8
 LC919:  ldx     $C4
-        lda     $0590,x
+        lda     BUFEDT,x
         beq     LC92B
         ldx     $C8
         sta     L0100,x
@@ -1592,7 +1592,7 @@ LCB55:  iny
         .byte   $2C
 LCB59:  inx
         iny
-        lda     $0590,x
+        lda     BUFEDT,x
         jsr     LCB45
         sec
         sbc     LEB98,y
@@ -1615,7 +1615,7 @@ LCB7E:  rts
 LCB7F:  ldx     $C4
         inx
         ldy     $C8
-LCB84:  lda     $0590,x
+LCB84:  lda     BUFEDT,x
         beq     LCB95
         cmp     #$22
         beq     LCB94
@@ -3122,8 +3122,8 @@ LD5BB:  tya
         bne     LD5D3
 LD5CE:  lda     LD5BB,x
 LD5D1:  brk
-LD5D3           := * + 1
-        bpl     LD5FC
+        .byte   $10
+LD5D3:  plp
         bpl     LD5A6
         rts
 
@@ -3143,8 +3143,7 @@ str_junk:
         .byte   "disquette"
 
         .byte   $A0
-        .byte   "mau"
-LD5FC:  .byte   "vais"
+        .byte   "mauvais"
         .byte   $A0
         .byte   "typ"
         .byte   $E5
@@ -5945,7 +5944,7 @@ LEA45:  cmp     #$20
         bcc     LEA51
         cpx     #$6E
         beq     LEA22
-        sta     $0590,x
+        sta     BUFEDT,x
         inx
 LEA51:  brk
         bpl     LEAA0
@@ -7570,8 +7569,8 @@ LF481:  sty     L0061
         ora     (RES,x)
 LF488:  cpy     #$68
         asl     a
-        .byte   $44
-        eor     #$52
+; $F48b
+str_dir:.byte   "DIR"
         stx     $83,y
 LF490:  lda     #$56
         bne     LF4D9
@@ -7579,10 +7578,10 @@ LF490:  lda     #$56
         .byte   $F4
         ora     (RES,x)
         cpy     #$6A
-        ora     $4544
-        jmp     L4142
-
-        .byte   $4B
+        .byte   $0D
+; $F49b
+str_delbak:
+        .byte   "DELBAK"
         stx     $83,y
         lda     #$4A
         bne     LF4D9
@@ -7591,8 +7590,8 @@ LF490:  lda     #$56
         ora     (RES,x)
         cpy     #$70
         asl     a
-        .byte   $44
-        eor     $4C
+; $F4ae
+str_del:.byte   "DEL"
         stx     $83,y
         lda     #$4D
         bne     LF4D9
@@ -7601,19 +7600,19 @@ LF490:  lda     #$56
         ora     (RES,x)
         cpy     #$71
 LF4BD:  .byte   $0B
-        bvc     LF512
-        .byte   $4F
-        .byte   $54
+; $F4be
+str_prot:
+        .byte   "PROT"
         stx     $83,y
         lda     #$50
         bne     LF4D9
         sbc     (VARAPL+36,x)
         ora     (RES,x)
         cpy     #$72
-        ora     $4E55
-        bvc     LF525
-        .byte   $4F
-        .byte   $54
+        .byte   $0D
+; $F4cf
+str_unprot:
+        .byte   "UNPROT"
         stx     $83,y
         lda     #$53
 LF4D9:  pha
@@ -7626,8 +7625,9 @@ LF4D9:  pha
         ora     (RES,x)
         cpy     #$33
         .byte   $0B
-        eor     #$4E
-        eor     #$54
+; $F4e8
+str_init:
+        .byte   "INIT"
         .byte   $80
         .byte   $83
         lda     #$00
@@ -7641,9 +7641,9 @@ LF4D9:  pha
         brk
         cpy     #$74
         .byte   $0B
-        jmp     L414F
-
-        .byte   $44
+; $F502
+str_load:
+        .byte   "LOAD"
         .byte   $82
         .byte   $83
         jsr     LF997
@@ -7652,14 +7652,13 @@ ROUTINE5:
         lda     #$68
         jsr     ROUTINE6
         lda     #$62
-LF512:  jsr     ROUTINE6
+        jsr     ROUTINE6
 LF515:  lda     $052C
         lsr     a
         lda     $052C
         bpl     LF53D
         lda     $052F
         ldy     $0530
-LF525           := * + 1
         sta     L005E
         sty     $5F
         php
@@ -7685,9 +7684,10 @@ LF549:  rts
         brk
         cpy     #$75
         .byte   $0C
-        .byte   $53
-        eor     ($56,x)
-LF554:  eor     $4D
+; $F551
+str_savem:
+        .byte   "SAV"
+LF554:  .byte   "EM"
         .byte   $22
         cpy     #$4A
         .byte   $03
@@ -7696,11 +7696,11 @@ LF554:  eor     $4D
         ora     (RES,x)
         cpy     #$76
         .byte   $0C
-; $E564
+; $F564
 str_saveo:
         .byte   "SAVEO"
-        .byte   $22
-        cpy     #$37
+        .byte   $22,$C0
+        .byte   $37
         .byte   $03
         jsr     LF62B
         .byte   $83
@@ -7708,9 +7708,9 @@ str_saveo:
         brk
         cpy     #$77
         .byte   $0C
-        .byte   $53
-        eor     ($56,x)
-        eor     $55
+; $F577
+str_saveu:
+        .byte   "SAVEU"
         .byte   $22
         cpy     #$24
         .byte   $03
@@ -7720,9 +7720,10 @@ str_saveo:
         brk
         cpy     #$78
         .byte   $0B
-        .byte   $53
-        eor     ($56,x)
-        eor     $22
+; $F58a
+str_save:
+        .byte   "SAVE"
+        .byte   $22
         cpy     #$11
         .byte   $03
         jsr     LF634
@@ -7831,7 +7832,7 @@ LF65B:  .byte   $32
         bcc     LF65B
         ora     (RES,x)
         cpy     #$79
-        ora     L4142
+        ora     $4142
         .byte   $43
         .byte   $4B
         eor     $50,x
@@ -9215,6 +9216,7 @@ LFFEB:  .byte   $C2
         .byte   $6F
         cld
         bpl     LFFEB
-        brk
-        cpy     #$FA
-        .byte   $02
+; $FFFC
+RESET:  .byte   $00,$C0
+; $FFFE
+VIRQ:   .byte   $FA,$02

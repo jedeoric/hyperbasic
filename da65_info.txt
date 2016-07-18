@@ -12,7 +12,7 @@
 RANGE { START $FFAC; END   $FFC4;    TYPE Code;   NAME "START_HYPERBASIC"; COMMENT "$FFAC";   };
 RANGE { START $FFC5;  END   $FFE5;    TYPE BYTETABLE; COMMENT "free_bytes";  };
 
-RANGE { START $D587;  END   $D5D2;    TYPE Code;NAME "ROUTINE1";   COMMENT "$D587";  };
+RANGE { START $D587;  END   $D5D1;    TYPE Code;NAME "ROUTINE1";   COMMENT "$D587";  };
 
 
 RANGE { START $C384;  END   $C3AA;    TYPE Code;NAME "ROUTINE2";   COMMENT "$C384";  };
@@ -90,7 +90,7 @@ RANGE { START $CAE8;  END   $CAEA;    TYPE Code;NAME "ROUTINE19";   COMMENT "$CA
 
 
 		
-RANGE { START $D5D3;  END   $D5D3;    TYPE BYTETABLE;  };		
+RANGE { START $D5D2;  END   $D5D2;    TYPE BYTETABLE;  };		
 
 
 
@@ -134,13 +134,27 @@ LABEL { NAME "VEXBNK";     ADDR  $414; SIZE 1;   };
 LABEL { NAME "BNKCIB";     ADDR  $417; SIZE 1;   };	
 LABEL { NAME "SCRX";     ADDR  $220; SIZE 1;   };	
 LABEL { NAME "SCRDX";     ADDR  $228; SIZE 1;   };	
+
+LABEL { NAME "BUFEDT";     ADDR  $590;size 110;};	
+
 ########################################################################
-
-
+		RANGE { START $FFFE;  END   $FFFF;    TYPE ByteTable; NAME "VIRQ"; COMMENT "$FFFE";  };
+		RANGE { START $FFFC;  END   $FFFD;    TYPE ByteTable; NAME "RESET"; COMMENT "$FFFC";  };
 	
 		
-		#STR 
-		RANGE { START $F564;  END   $F569;    TYPE TextTable; NAME "str_saveo";   COMMENT "$E564";  };
+		#STR
+		RANGE { START $F48b;  END   $F48d;    TYPE TextTable; NAME "str_dir"; COMMENT "$F48b";  };
+		RANGE { START $F49b;  END   $F4a0;    TYPE TextTable; NAME "str_delbak"; COMMENT "$F49b";  };
+		RANGE { START $F4ae;  END   $F4b0;    TYPE TextTable; NAME "str_del"; COMMENT "$F4ae";  };
+		RANGE { START $F4be;  END   $F4c1;    TYPE TextTable; NAME "str_prot"; COMMENT "$F4be";  };
+		RANGE { START $F4cf;  END   $F4d4;    TYPE TextTable; NAME "str_unprot"; COMMENT "$F4cf";  };
+		RANGE { START $F4e8;  END   $F4eb;    TYPE TextTable; NAME "str_init"; COMMENT "$F4e8";  };
+		RANGE { START $F502;  END   $F505;    TYPE TextTable; NAME "str_load"; COMMENT "$F502";  };
+		RANGE { START $F551;  END   $F556;    TYPE TextTable; NAME "str_savem"; COMMENT "$F551";  };
+		RANGE { START $F564;  END   $F56a;    TYPE TextTable; NAME "str_saveo";   COMMENT "$F564";  };
+		RANGE { START $F577;  END   $F57c;    TYPE TextTable; NAME "str_saveu";   COMMENT "$F577";  };
+		RANGE { START $F58a;  END   $F58e;    TYPE TextTable; NAME "str_save";   COMMENT "$F58a";  };
+		
 		RANGE { START $FF7B;  END   $FF80;    TYPE TextTable; NAME "str_schar";   COMMENT "X";  };
 		RANGE { START $FF65;  END   $FF69;    TYPE TextTable; NAME "str_char";   COMMENT "X";  };
 		RANGE { START $FF4F;  END   $FF53;    TYPE TextTable; NAME "str_fill";   COMMENT "X";  };
